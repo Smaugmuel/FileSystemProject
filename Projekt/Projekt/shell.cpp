@@ -18,6 +18,8 @@ std::string help();
 
 /* More functions ... */
 
+/////////////////////////////////
+
 int main(void) {
 
 	std::string userCommand, commandArr[MAXCOMMANDS];
