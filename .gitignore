@@ -13,6 +13,11 @@
 *.dylib
 *.dll
 
+# Visual C++ cache files
+*.opendb
+*.opensdf
+*.sdf
+
 # Fortran module files
 *.mod
 
