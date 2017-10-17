@@ -18,7 +18,6 @@ std::string help();
 
 /* More functions ... */
 
-/////////////////////////////////
 
 int main(void) {
 
