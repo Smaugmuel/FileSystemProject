@@ -97,6 +97,15 @@ std::string Block::toString() const {
     return output;
 }
 
+std::string Block::toString(int start, int end) const
+{
+	std::string output;
+	output.reserve(end-start);
+	for (int i = start; i < end; ++i)
+		output += this->block[i];
+	return output;
+}
+
 
 
 

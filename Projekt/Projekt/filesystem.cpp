@@ -31,16 +31,24 @@ void FileSystem::createFile(std::string fileName)
 		Block b = mMemblockDevice.readBlock(block);
 		int blockSize = b.size(); //MaxBytes
 
-		const int elementnNmeSize = 14;
+		const int elementNameSize = 14;
 		const int nodeInfo = 2;
-		const int rowSize = nodeInfo + elementnNmeSize;
+		const int rowSize = nodeInfo + elementNameSize;
 		const int maxRows = blockSize / (rowSize);
 
 		int row = 0;
 
 		while (b[row*rowSize] != 0 && row < maxRows)
 		{
+			std::string folderFound = b.toString(row*rowSize+nodeInfo, row*rowSize+rowSize);
+
+			if (folderFound == folders.at(i)) {//Folder Exist!
 			
+			}
+			else {//Folder Does'nt Exist
+
+
+			}
 		}
 	}
 

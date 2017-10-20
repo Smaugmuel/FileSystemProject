@@ -83,7 +83,7 @@ Block MemBlockDevice::readBlock(int blockNr) const {
 /* Resets all the blocks */
 void MemBlockDevice::reset() {
     for (int i = 0; i < this->nrOfBlocks; ++i) {
-        this->memBlocks[i].reset('0');
+        this->memBlocks[i].reset('0');				//TODO 0 != '0'
     }
 }
 
