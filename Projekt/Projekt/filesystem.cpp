@@ -44,7 +44,7 @@ bool FileSystem::createFile(std::string fileName)
 	//===============================================================================
 	// Read from the root block
 	int block = 0;
-	Block b = mMemblockDevice.readBlock(block);
+	std::string b = mMemblockDevice.readBlock(block).toString();
 	int blockSize = b.size(); //MaxBytes
 	const int maxRows = blockSize / rowSize;
 
@@ -78,16 +78,17 @@ bool FileSystem::createFile(std::string fileName)
 	//Loop Through all files in current block directory(block)
 	int row = 0;
 	bool found = false;
-	while (b[row*rowSize] != 0 && row < maxRows && !found)
+	char a;
+	while (a = b[row*rowSize] != 0 && row < maxRows && !found)
 	{
-		std::string folderFound = b.toString(row*rowSize + nodeInfo, row*rowSize + rowSize);//file/Foldername found in block
+		std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+		nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
-		if (folderFound == folders.at(folders.size()-1)) {//Folder Exist!
-			block = b[row*rowSize];
+		nameAtRow.size();
+
+		if (nameAtRow.compare(name) == 0) {//Folder Exist!
+			block = b[row*rowSize + 1];
 			found = true;
-		}
-		else {//Folder Does'nt Exist
-
 		}
 
 		row++;
@@ -99,13 +100,19 @@ bool FileSystem::createFile(std::string fileName)
 	}
 	else {
 
-		// 2: Flag for a file
+		// f: Flag for a file
 		// 1: Which block it's located in
-		std::string data("21");
-		data += name;
+		std::string data = b;
 
+		data.size();
 
-		mMemblockDevice.writeBlock(0, data.c_str());
+		data[row*rowSize] = 'f';
+		data[row*rowSize + 1] = 1;
+		data.replace(data.begin() + (row*rowSize + 2), data.begin() + (row*rowSize + 2 + name.size()), name);
+
+		data.size();
+
+		mMemblockDevice.writeBlock(block, data);
 	}
 
 
