@@ -8,6 +8,7 @@ class FileSystem
 private:
     MemBlockDevice mMemblockDevice;
     // Here you can add your own data structures
+
 public:
     FileSystem();
     ~FileSystem();
@@ -21,6 +22,7 @@ public:
 
     /* Creates a folder in the filesystem */
     // createFolderi(...);
+	void createFolder(std::string folderName);
 
     /* Removes a file in the filesystem */
     // removeFile(...);

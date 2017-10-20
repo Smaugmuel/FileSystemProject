@@ -27,6 +27,10 @@ int main(void) {
 
     bool bRun = true;
 
+
+	FileSystem fs;
+	fs.createFolder("/hello world/gustavo sorola/knarkare");
+
     do {
         std::cout << user << ":" << currentDir << "$ ";
         getline(std::cin, userCommand);
