@@ -30,8 +30,9 @@ int main(void) {
 
 	FileSystem fs;
 	//fs.createFolder("/hello world");
-	fs.createFile("/stuff");
-	fs.createFile("/stuff");
+	fs.createFile("/stuff.txt");
+	fs.createFolder("/shit");
+	fs.createFile("/thing.abd");
 
     do {
         std::cout << user << ":" << currentDir << "$ ";
