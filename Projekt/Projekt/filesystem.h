@@ -19,7 +19,7 @@ public:
 
     /* This function creates a file in the filesystem */
     // createFile(...)
-	void createFile(std::string fileName);
+	bool createFile(std::string fileName);
 
     /* Creates a folder in the filesystem */
     // createFolderi(...);
