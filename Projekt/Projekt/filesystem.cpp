@@ -50,28 +50,38 @@ bool FileSystem::createFile(std::string fileName)
 
 
 	//If file is not created in current directory
-	//for (int i = 0; i < folders.size()-1; i++)
-	//{
-	//	
-	//	int row = 0;
-	//	bool found = false;
-	//
-	//	//Loop Through all files in current block directory(block)
-	//	while (b[row*rowSize] != 0 && row < maxRows && !found)
-	//	{
-	//		std::string folderFound = b.toString(row*rowSize+nodeInfo, row*rowSize+rowSize);//file/Foldername found in block
-	//
-	//		if (folderFound == folders.at(i)) {//Folder Exist!
-	//			block = b[row*rowSize];
-	//			found = true;
-	//		}
-	//		else {//Folder Does'nt Exist
-	//
-	//		}
-	//
-	//		row++;
-	//	}
-	//}
+	for (int i = 0; i < folders.size(); i++)
+	{
+		int row = 0;
+		bool found = false;
+		char a;
+		while (a = b[row*rowSize] != 0 && row < maxRows && !found)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			nameAtRow.size();
+
+			if (nameAtRow.compare(folders.at(i)) == 0) {//Folder Exist!
+
+				if (b[row*rowSize] != 'd') {//Something exist with correct name but it is not a directory. Process can not continnue!
+					return false;
+				}
+
+				block = b[row*rowSize + 1];//Switch Block nr to the next Folder in pathname.
+				found = true;
+			}
+
+			row++;
+		}
+
+		if (found) {//Folder Exist And The Process can continue
+			b = mMemblockDevice.readBlock(block).toString();//Read Data from next block
+		}
+		else {//Folder Does'nt Exist and needs to be created before creating the file inside it!!!!!!!!!!!!!!!!!!!!!
+			return false;
+		}
+	}
 
 	//===============================================================================
 	//Create File in current directory
@@ -84,9 +94,9 @@ bool FileSystem::createFile(std::string fileName)
 		std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
 		nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
-		nameAtRow.size();
+		//nameAtRow.size();
 
-		if (nameAtRow.compare(name) == 0) {//Folder Exist!
+		if (nameAtRow.compare(name) == 0) {//File Exist!
 			block = b[row*rowSize + 1];
 			found = true;
 		}
@@ -106,7 +116,7 @@ bool FileSystem::createFile(std::string fileName)
 
 		data[row*rowSize] = 'f';
 		data[row*rowSize + 1] = ++mBlockCount;
-		data.replace(data.begin() + (row*rowSize + 2), data.begin() + (row*rowSize + 2 + name.size()), name);
+		data.replace(data.begin() + (row*rowSize + nodeInfo), data.begin() + (row*rowSize + nodeInfo + name.size()), name);
 
 		mMemblockDevice.writeBlock(block, data);
 	}
@@ -122,8 +132,8 @@ bool FileSystem::createFolder(std::string folderName)
 	std::replace(folderName.begin(), folderName.end(), '/', ' ');
 
 	// Rows consist of 2 bytes for information and 14 for the name
-	const int elementNameSize = 14;
-	const int nodeInfo = 2;
+	const int elementNameSize = 13;
+	const int nodeInfo = 3;
 	const int rowSize = nodeInfo + elementNameSize;
 
 	//===============================================================================
@@ -153,29 +163,40 @@ bool FileSystem::createFolder(std::string folderName)
 	const int maxRows = blockSize / rowSize;
 
 
-	//If file is not created in current directory
-	//for (int i = 0; i < folders.size()-1; i++)
-	//{
-	//	
-	//	int row = 0;
-	//	bool found = false;
-	//
-	//	//Loop Through all files in current block directory(block)
-	//	while (b[row*rowSize] != 0 && row < maxRows && !found)
-	//	{
-	//		std::string folderFound = b.toString(row*rowSize+nodeInfo, row*rowSize+rowSize);//file/Foldername found in block
-	//
-	//		if (folderFound == folders.at(i)) {//Folder Exist!
-	//			block = b[row*rowSize];
-	//			found = true;
-	//		}
-	//		else {//Folder Does'nt Exist
-	//
-	//		}
-	//
-	//		row++;
-	//	}
-	//}
+	//If Folders is not created in current directory
+	for (int i = 0; i < folders.size(); i++)
+	{
+		int row = 0;
+		bool found = false;
+		char a;
+		while (a = b[row*rowSize] != 0 && row < maxRows && !found)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			nameAtRow.size();
+
+			if (nameAtRow.compare(folders.at(i)) == 0) {//Folder Exist!
+
+				if (b[row*rowSize] != 'd') {//Something exist with correct name but it is not a directory. Process can not continnue!
+					return false;
+				}
+
+				block = b[row*rowSize + 1];//Switch Block nr to the next Folder in pathname.
+				found = true;
+			}
+
+			row++;
+		}
+
+		if (found) {//Folder Exist And The Process can continue
+			b = mMemblockDevice.readBlock(block).toString();//Read Data from next block
+		}
+		else {//Folder Does'nt Exist and needs to be created before creating the file inside it!!!!!!!!!!!!!!!!!!!!!
+			return false;
+		}
+	}
+
 
 	//===============================================================================
 	//Create File in current directory
@@ -212,7 +233,7 @@ bool FileSystem::createFolder(std::string folderName)
 
 		data[row*rowSize] = 'd';
 		data[row*rowSize + 1] = ++mBlockCount;
-		data.replace(data.begin() + (row*rowSize + 2), data.begin() + (row*rowSize + 2 + name.size()), name);
+		data.replace(data.begin() + (row*rowSize + nodeInfo), data.begin() + (row*rowSize + nodeInfo + name.size()), name);
 
 		data.size();
 

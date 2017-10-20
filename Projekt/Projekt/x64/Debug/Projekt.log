@@ -1,0 +1,6 @@
+﻿  filesystem.cpp
+c:\users\swimba\documents\filesystemproject\projekt\projekt\filesystem.cpp(48): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\swimba\documents\filesystemproject\projekt\projekt\filesystem.cpp(162): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\swimba\documents\filesystemproject\projekt\projekt\filesystem.cpp(211): warning C4715: 'FileSystem::createFolder': not all control paths return a value
+c:\users\swimba\documents\filesystemproject\projekt\projekt\filesystem.cpp(125): warning C4715: 'FileSystem::createFile': not all control paths return a value
+  Projekt.vcxproj -> C:\Users\Swimba\Documents\FileSystemProject\Projekt\x64\Debug\Projekt.exe

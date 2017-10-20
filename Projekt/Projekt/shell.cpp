@@ -33,6 +33,7 @@ int main(void) {
 	fs.createFile("/stuff.txt");
 	fs.createFolder("/shit");
 	fs.createFile("/thing.abd");
+	fs.createFile("/shit/stuff.txt");
 
     do {
         std::cout << user << ":" << currentDir << "$ ";
