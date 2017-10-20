@@ -29,7 +29,9 @@ int main(void) {
 
 
 	FileSystem fs;
-	fs.createFolder("/hello world/gustavo sorola/knarkare");
+	//fs.createFolder("/hello world");
+	fs.createFile("/stuff");
+	fs.createFile("/stuff");
 
     do {
         std::cout << user << ":" << currentDir << "$ ";
