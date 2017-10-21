@@ -30,10 +30,10 @@ int main(void) {
 
 	FileSystem fs;
 	//fs.createFolder("/hello world");
-	fs.createFile("/stuff.txt");
-	fs.createFolder("/shit");
-	fs.createFile("/thing.abd");
-	fs.createFile("/shit/stuff.txt");
+	fs.Create("/stuff.txt",FLAG_FILE);
+	fs.Create("/shit", FLAG_DIRECTORY);
+	fs.Create("/thing.abd", FLAG_FILE);
+	fs.Create("/shit/stuff.txt", FLAG_FILE);
 
     do {
         std::cout << user << ":" << currentDir << "$ ";

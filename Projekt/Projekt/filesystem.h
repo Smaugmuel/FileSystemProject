@@ -3,11 +3,17 @@
 
 #include "memblockdevice.h"
 
+const char FLAG_FILE = 'f';
+const char FLAG_DIRECTORY = 'd';
+
 class FileSystem
 {
 private:
     MemBlockDevice mMemblockDevice;
-	unsigned int mBlockCount;
+
+	unsigned int mRootStart;
+	//unsigned int mBlockCount;
+
     // Here you can add your own data structures
 
 public:
@@ -20,11 +26,9 @@ public:
 
     /* This function creates a file in the filesystem */
     // createFile(...)
-	bool createFile(std::string fileName);
+	bool Create(std::string fileName, char flag);
 
     /* Creates a folder in the filesystem */
-    // createFolderi(...);
-	bool createFolder(std::string folderName);
 
     /* Removes a file in the filesystem */
     // removeFile(...);
