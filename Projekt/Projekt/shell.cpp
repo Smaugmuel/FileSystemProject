@@ -4,11 +4,11 @@
 #include <algorithm>
 
 const int MAXCOMMANDS = 8;
-const int NUMAVAILABLECOMMANDS = 15;
+const int NUMAVAILABLECOMMANDS = 16;
 
 std::string availableCommands[NUMAVAILABLECOMMANDS] = {
     "quit","format","ls","create","cat","createImage","restoreImage",
-    "rm","cp","append","mv","mkdir","cd","pwd","help"
+    "rm","cp","append","mv","mkdir","cd","pwd","help", "spaceleft",
 };
 
 /* Takes usercommand from input and returns number of commands, commands are stored in strArr[] */
@@ -27,8 +27,10 @@ void PrintWorkingDirectory(const std::string& directory);
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-std::string TrimPath(std::string path);
+void FormatDisk(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 
+std::string TrimPath(std::string path);
 std::string ProcessPath(std::string cd, std::string extraPath);
 
 int main(void) {
@@ -188,6 +190,7 @@ int main(void) {
 				bRun = quit();                
                 break;
             case 1: // format
+				FormatDisk(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 2: // ls
 				ListDirectory(nrOfCommands, fs, commandArr, currentDir);
@@ -225,6 +228,10 @@ int main(void) {
             case 14: // help
                 std::cout << help() << std::endl;
                 break;
+			case 15: // spaceleft
+				SpaceLeft(nrOfCommands, fs, commandArr, currentDir);
+				break;
+
             default:
                 std::cout << "Unknown command: " << commandArr[0] << std::endl;
             }
@@ -404,6 +411,7 @@ void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
 	if (nrOfCommands == 2) {
 		std::string content;
+		std::cout << "Content to appent with: ";
 		getline(std::cin, content);
 		
 		switch (fs.AppendFile(content, ProcessPath(currentDir, commandArr[1])))
@@ -469,6 +477,42 @@ void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comm
 	{
 		std::cout << "Path entered is not a directory\n\n";
 	}
+}
+
+void FormatDisk(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+
+	std::string content;
+
+	bool erase = false;
+	bool stop = false;
+
+	do {
+		std::cout << "Are you sure you want to format the disk? all data will be erased ( yes / no ): ";
+		getline(std::cin, content);
+		if (content == "yes") {
+			erase = true;
+			stop = true;
+		}
+		else if(content == "no")
+		{
+			erase = false;
+			stop = true;
+		}
+			
+
+	} while (!stop);
+
+	if (erase) {
+		currentDir = "/";
+		fs.FormatDisk();
+
+		std::cout << "\nDisk is formated. All data have been removed" << std::endl;
+		std::cout << "Space Left On Disk: " << fs.freeSpace() << " Bytes (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
+	}
+}
+
+void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+	std::cout << "Space Left On Disk: "<< fs.freeSpace() << " Bytes (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
 }
 
 

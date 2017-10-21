@@ -35,6 +35,7 @@ private:
 
 	const int nextBlockInfoSize = 12;
 
+	void init();
 
 public:
     FileSystem();
@@ -65,6 +66,8 @@ public:
 
     /* This function will get all the files and folders in the specified folder */
     std::string listDir(std::string path, int startBlock = -1);
+
+	void FormatDisk();
 
     /* Add your own member-functions if needed */
 	int freeSpace();

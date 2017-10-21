@@ -90,7 +90,8 @@ FileInfo FileSystem::Exist(std::string path, int startBlock)
 	return f;
 }
 
-FileSystem::FileSystem() {
+void FileSystem::init()
+{
 	mRootStart = mMemblockDevice.reservBlock();//TODO:: ERROR hadeling if reservBlock() returns -1
 
 	std::string b = mMemblockDevice.readBlock(mRootStart).toString();
@@ -111,6 +112,10 @@ FileSystem::FileSystem() {
 
 	//Rewrite root block
 	mMemblockDevice.writeBlock(mRootStart, b);
+}
+
+FileSystem::FileSystem() {
+	init();
 }
 
 FileSystem::~FileSystem() {
@@ -669,6 +674,12 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 
 
 	return output;
+}
+
+void FileSystem::FormatDisk()
+{
+	mMemblockDevice.reset();
+	init();
 }
 
 int FileSystem::freeSpace()

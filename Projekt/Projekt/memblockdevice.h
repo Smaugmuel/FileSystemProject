@@ -6,6 +6,7 @@ class MemBlockDevice: public BlockDevice
 {
 private:
 	void changeBlockStatus(int blockNr, bool free);
+	void init();
 public:
     MemBlockDevice(int nrOfBlocks = 250);
     MemBlockDevice(const MemBlockDevice &other);
