@@ -30,10 +30,54 @@ int main(void) {
 
 	FileSystem fs;
 	//fs.createFolder("/hello world");
-	fs.Create("/stuff.txt",FLAG_FILE);
-	fs.Create("/shit", FLAG_DIRECTORY);
-	fs.Create("/thing.abd", FLAG_FILE);
-	fs.Create("/shit/stuff.txt", FLAG_FILE);
+	
+
+	//File Test
+	//==============================================================================
+	int result;
+	
+	result = fs.Create("/stuff.txt",FLAG_FILE);
+	if (result == -1) {
+		std::cout << "Failed To Create File(1)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit", FLAG_DIRECTORY);
+	if (result == -1) {
+		std::cout << "Failed To Create File(2)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/thing.abd", FLAG_FILE);
+	if (result == -1) {
+		std::cout << "Failed To Create File(3)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit/stuff.txt", FLAG_FILE);
+	if (result == -1) {
+		std::cout << "Failed To Create File(4)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+
+	result = fs.Create("/shit2/Hej/Test/stuff.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File(5)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+
+
+
+	//==============================================================================
+
+
 
     do {
         std::cout << user << ":" << currentDir << "$ ";

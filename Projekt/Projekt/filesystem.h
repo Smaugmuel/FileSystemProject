@@ -6,6 +6,12 @@
 const char FLAG_FILE = 'f';
 const char FLAG_DIRECTORY = 'd';
 
+struct FileInfo {
+	bool exist;
+	char flag;
+	int blockIndex;
+};
+
 class FileSystem
 {
 private:
@@ -15,6 +21,10 @@ private:
 	//unsigned int mBlockCount;
 
     // Here you can add your own data structures
+	const int elementNameSize = 13;
+	const int nodeInfo = 3;
+	const int rowSize = nodeInfo + elementNameSize;
+
 
 public:
     FileSystem();
@@ -24,9 +34,11 @@ public:
 	   You are free to specify parameter lists and return values
     */
 
-    /* This function creates a file in the filesystem */
-    // createFile(...)
-	bool Create(std::string fileName, char flag);
+	//Check if File/Folder Exist
+	FileInfo Exist(std::string path, int startBlock = -1);
+
+    /* This function creates a file or Folder in the filesystem. startBlock = -1 meens root, Returns Block id of created file( -1 if failed )*/
+	int Create(std::string fileName, char flag, int startBlock = -1);
 
     /* Creates a folder in the filesystem */
 
