@@ -7,7 +7,7 @@ FileInfo FileSystem::Exist(std::string path, int startBlock)
 	if (startBlock == -1)
 		startBlock = mRootStart;
 
-	FileInfo f = {false, 'f', -1};
+	FileInfo f = {false, "" ,FLAG_FILE, -1, -1};
 
 	// Replace spaces with underlines and slashes with spaces
 	// to utilize stringstream easily
@@ -46,7 +46,7 @@ FileInfo FileSystem::Exist(std::string path, int startBlock)
 		int row = 0;
 		bool found = false;
 		char a;
-		while (a = b[row*rowSize] != 0 && row < maxRows && !found)
+		while ((a = b[row*rowSize]) != 0 && row < maxRows && !found)
 		{
 			std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
@@ -67,9 +67,11 @@ FileInfo FileSystem::Exist(std::string path, int startBlock)
 				}
 				else {
 					f.exist = true;
+					f.fileName = folders.at(i);
 					f.flag = b[row*rowSize];
 					f.blockIndex = b[row*rowSize + 1];
-					
+					f.parrentBlockIndex = block;
+
 					return f;
 				}
 			}
@@ -167,7 +169,7 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 	int row = 0;
 	bool found = false;
 	char a;
-	while (a = b[row*rowSize] != 0 && row < maxRows && !found)
+	while ((a = b[row*rowSize]) != 0 && row < maxRows && !found)
 	{
 		std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
 		nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
@@ -205,4 +207,96 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 		return blockIndex;//Return block index of created file/folder
 	}
 
+}
+
+bool FileSystem::removeFile(std::string fileName, int startBlock)
+{
+	if (startBlock == -1) {
+		startBlock == mRootStart;
+	}
+	
+	FileInfo fi = Exist(fileName, startBlock);
+
+	if (fi.exist && fi.flag == FLAG_FILE) {
+		int parentBlock = fi.parrentBlockIndex;
+		int block = fi.blockIndex;
+
+		std::string b = mMemblockDevice.readBlock(parentBlock).toString();
+		int blockSize = b.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+
+		int rowToRemove = 0;
+		int row = 0;
+
+		bool found = false;
+		char a;
+		while ((a = b[row*rowSize]) != 0 && row < maxRows)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+				rowToRemove = row;
+			}
+
+			row++;
+		}
+
+		//Replace the "file to be removed"'s row in parrent to the last row in parrent
+		b.replace(b.begin() + (rowToRemove*rowSize), b.begin() + (rowToRemove*rowSize + rowSize), b.substr((row-1)*rowSize, rowSize));
+		//Clear last Row in Parrent
+		b.replace(b.begin() + ((row-1)*rowSize), b.begin() + ((row-1)*rowSize + rowSize),rowSize, '\0');
+
+		mMemblockDevice.freeBlock(block);//Mark The File's Block as free, to free up the space
+		mMemblockDevice.writeBlock(parentBlock, b);//rewrite parrent folder block
+	}
+	else {
+		return false;
+	}
+
+	return true;
+}
+
+std::string FileSystem::listDir(std::string path, int startBlock)
+{
+	//Cannot List Root until "." and ".." Folders Exist
+
+	if (startBlock == -1)
+	{
+		startBlock = mRootStart;
+	}
+
+	std::string output = "";
+
+	FileInfo fi = Exist(path, startBlock);
+
+	if (fi.exist && fi.flag == FLAG_DIRECTORY) {
+		std::string b = mMemblockDevice.readBlock(fi.blockIndex).toString();
+
+		int blockSize = b.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+
+		int row = 0;
+
+		bool found = false;
+		char a;
+		while ((a = b[row*rowSize]) != 0 && row < maxRows)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			output += ((a == 'f') ? "<FILE>\t" : "<DIR>\t");
+			output += nameAtRow;
+			output += "\n";
+
+			row++;
+		}
+	}
+	else {
+		output = "Directory does not exist\n";
+	}
+
+
+
+	return output;
 }

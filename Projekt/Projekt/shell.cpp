@@ -72,8 +72,54 @@ int main(void) {
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
+	result = fs.Create("/shit2/Hej/Test/Bajs.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/stuff2.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/Kissen.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/Mapp2", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
 
+	//REMOVE TEST
+	//====================================
 
+	bool res = fs.removeFile("/stuff.txt");
+	if (!res) {
+		std::cout << "Failed To Remove File(1)" << std::endl;
+	}
+	else {
+		std::cout << "File Removed(1)" << std::endl;
+	}
+
+	std::cout << std::endl << fs.listDir("/shit2/Hej/Test/") << std::endl;
 
 	//==============================================================================
 

@@ -8,8 +8,10 @@ const char FLAG_DIRECTORY = 'd';
 
 struct FileInfo {
 	bool exist;
+	std::string fileName;
 	char flag;
 	int blockIndex;
+	int parrentBlockIndex;
 };
 
 class FileSystem
@@ -40,10 +42,8 @@ public:
     /* This function creates a file or Folder in the filesystem. startBlock = -1 meens root, Returns Block id of created file( -1 if failed )*/
 	int Create(std::string fileName, char flag, int startBlock = -1);
 
-    /* Creates a folder in the filesystem */
-
     /* Removes a file in the filesystem */
-    // removeFile(...);
+    bool removeFile(std::string fileName, int startBlock = -1);
 
     /* Removes a folder in the filesystem */
     // removeFolder(...);
@@ -52,7 +52,7 @@ public:
     // goToFolder(...);
 
     /* This function will get all the files and folders in the specified folder */
-    // listDir(...);
+    std::string listDir(std::string path, int startBlock = -1);
 
     /* Add your own member-functions if needed */
 };
