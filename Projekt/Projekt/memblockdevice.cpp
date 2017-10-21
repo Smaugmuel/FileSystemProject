@@ -137,7 +137,7 @@ int MemBlockDevice::reservBlock()
 					changeBlockStatus(output,true);//Change status of free block to "Used"
 				}
 			}
-
+			
 			currentByteIndex++;
 		}
 

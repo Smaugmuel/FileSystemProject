@@ -371,7 +371,6 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 	std::vector<std::string> blockData;
 
-
 	int skipBlocks = offset / 500;
 	int skipRest = offset % 500;
 
@@ -445,6 +444,41 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 			mMemblockDevice.writeBlock(currentBlock, content);
 			currentBlock = nextBlock;
 			skipRest = 0;
+		}
+
+		/*=====================================================*/
+		int blockSize = 512; //MaxBytes
+		const int maxRows = blockSize / rowSize;
+
+		std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+
+		int row = 0;
+		bool found = false;
+		char a;
+		while ((a = b[row*rowSize]) != 0 && row < maxRows && !found)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + NodeElementInfo, NodeElementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			//nameAtRow.size();
+
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+
+				int lastsize = (unsigned char)(b[row*rowSize + 3]) << 24 | (unsigned char)(b[row*rowSize + 4]) << 16 | (unsigned char)(b[row*rowSize + 5]) << 8 | (unsigned char)(b[row*rowSize + 6]);
+
+				if (lastsize < size) {
+					b[row*rowSize + 3] = (unsigned char)(((unsigned int)size) >> 24 & 0xFF);
+					b[row*rowSize + 4] = (unsigned char)(((unsigned int)size) >> 16 & 0xFF);
+					b[row*rowSize + 5] = (unsigned char)(((unsigned int)size) >> 8 & 0xFF);
+					b[row*rowSize + 6] = (unsigned char)(((unsigned int)size) & 0xFF);
+
+					mMemblockDevice.writeBlock(fi.parrentBlockIndex, b);
+				}
+
+				found = true;
+			}
+
+			row++;
 		}
 
 		// Succes
@@ -528,8 +562,14 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 			std::string nameAtRow = b.substr(row*rowSize + NodeElementInfo, NodeElementNameSize);//file/Foldername found in block
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
+			int size = 0;
+			if (a == FLAG_FILE) {
+				size = (unsigned char)(b[row*rowSize + 3]) << 24 | (unsigned char)(b[row*rowSize + 4]) << 16 | (unsigned char)(b[row*rowSize + 5]) << 8 | (unsigned char)(b[row*rowSize + 6]);
+			}
+
 			output += ((a == FLAG_FILE) ? "<FILE>\t" : "<DIR>\t");
 			output += nameAtRow;
+			output += ((a == FLAG_FILE) ? "\t" + std::to_string(size) + " Bytes" : "");
 			output += "\n";
 
 			row++;
