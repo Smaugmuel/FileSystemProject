@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 
+const unsigned int BLOCK_SIZE_DEFAULT = 512;
+
 class Block
 {
 private:
@@ -13,7 +15,7 @@ private:
 
 public:
     /* Constructor */
-    Block(int nrOfElements = 512);    // overloaded (default) constructor
+    Block(int nrOfElements = BLOCK_SIZE_DEFAULT);    // overloaded (default) constructor
     Block(const Block &other); // copy-constructor
 
     /* Destructor */

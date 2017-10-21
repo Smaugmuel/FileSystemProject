@@ -44,7 +44,7 @@ int main(void) {
 	
 	int result;
 	
-	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
 	result = fs.Create("/stuff.txt",FLAG_FILE);
 	if (result == -1) {
@@ -132,7 +132,7 @@ int main(void) {
 	//REMOVE TEST
 	//====================================
 
-	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace()/512 << " Blocks)" << std::endl;
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace()/BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
 	bool res = fs.Remove("/stuff.txt");//Remove File (Stuff.txt)
 	if (!res) {
@@ -142,7 +142,7 @@ int main(void) {
 		std::cout << "File Removed(1)" << std::endl;
 	}
 
-	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
 	res = fs.Remove("/shit2");//Remove Folder With many sub fils & folders
 	if (!res) {
@@ -152,7 +152,7 @@ int main(void) {
 		std::cout << "File Removed(1)" << std::endl;
 	}
 
-	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
 	//LIST FILES IN DIRECTORY
 	//================================
@@ -340,33 +340,25 @@ void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	std::cout << "Listing directory\n";
-	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << "\n\n";
+	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << "\n";
 }
 
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
-	if (nrOfCommands > 2) {
-		std::string fileData = fs.readFile(commandArr[1]);
-		if (fileData.compare("") != 0)
+	if (nrOfCommands > 2)
+	{
+		if (fs.CopyFile(currentDir + commandArr[1], currentDir + commandArr[2]))
 		{
-			if (fs.Create(currentDir + commandArr[2], FLAG_FILE) != -1)
-			{
-				std::cout << "Created file: " << commandArr[2] << " as copy of file: " << commandArr[1] << "\n\n";
-				
-			}
-			else
-			{
-				std::cout << "Could not create file: " << commandArr[2] << "\n\n";
-			}
+			std::cout << "Created file " << commandArr[2] << " as a copy of " << commandArr[1] << "\n\n";
 		}
 		else
 		{
-			std::cout << "Could not copy file: " << commandArr[1] << " since it has no content or does not exist\n\n";
+			std::cout << "Failed to copy file " << commandArr[1] << "\n\n";
 		}
 	}
 	else
 	{
-		std::cout << "Wrong Syntax! Insert Path to Create file\n\n";
+		std::cout << "Wrong syntax! Type help for correct syntax\n\n";
 	}
 }
 

@@ -7,7 +7,7 @@ Block::Block(int size) {
     if (size > 0)
         this->nrOfElements = size;
     else
-        this->nrOfElements = 512;
+        this->nrOfElements = BLOCK_SIZE_DEFAULT;
 
     this->block = new char[this->nrOfElements];
 

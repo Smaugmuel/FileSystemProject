@@ -374,7 +374,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 		std::string content = mMemblockDevice.readBlock(fi.blockIndex).toString();
 
 		// Limits to one block for now
-		if (offset + data.size() < 512)
+		if (offset + data.size() < BLOCK_SIZE_DEFAULT)
 		{
 			// Replace block
 			content.replace(content.begin() + offset, content.begin() + (offset + data.size()), data.c_str());
@@ -411,29 +411,57 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 
 bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 {
-	//if (startBlock == -1)
-	//	startBlock = mRootStart;
+	FileInfo fi = Exist(oldFilePath, mRootStart);
 
-	//FileInfo fi = Exist(path, startBlock);
+	if (fi.exist && fi.flag == FLAG_FILE)
+	{
+		// oldFilePath is valid
 
-	//std::string output = "";
-	//if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
-	//	output = mMemblockDevice.readBlock(fi.blockIndex).toString();
-	//	output = output.substr(0, output.find('\0'));
-	//}
+		// Create the new file
+		int blockId = Create(newFilePath, FLAG_FILE);
 
-	//if (content.compare("") != 0)
-	//{
-	//	// File has content
+		if (blockId == -1)
+		{
+			// Failed to create file
+			return false;
+		}
 
-	//	// Limits to one block for now
-	//	if (offset + data.size() < 512)
-	//	{
-	//		// Replace block
-	//		content.replace(content.begin() + offset, content.begin() + (offset + data.size()), data.c_str());
+		// Read all the contents of the file, even if it spans multiple block
+		Block b = mMemblockDevice[fi.blockIndex];
+		
+		std::string blockContent = b.toString();
+		blockContent.erase(500);
+		std::string content = blockContent;
 
-	//	}
-	//}
+		while (b[500] != '\0')
+		{
+			// Index of next block
+			unsigned int nextBlock = (unsigned char)(b[510]) << 8 | (unsigned char)(b[511]);
+
+			// Load contents of next block
+			b = mMemblockDevice[nextBlock];
+			blockContent = b.toString();
+			blockContent.erase(500);
+
+			content.append(blockContent);
+		}
+
+		switch (mMemblockDevice.writeBlock(blockId, b.toString()))
+		{
+		case 1:
+			return true;
+			break;
+		case -1:
+			return false;
+			break;
+		case -2:
+			return false;
+			break;
+		default:
+			return false;
+			break;
+		}
+	}
 
 	return false;
 }
@@ -484,6 +512,5 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 
 int FileSystem::freeSpace()
 {
-	return mMemblockDevice.spaceLeft() * 512; //Hardcoded blocksize TODO: FIX
+	return mMemblockDevice.spaceLeft() * BLOCK_SIZE_DEFAULT; //Hardcoded blocksize TODO: FIX
 }
-

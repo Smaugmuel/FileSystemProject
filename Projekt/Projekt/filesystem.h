@@ -33,6 +33,8 @@ private:
 	
 	const int rowSize = NodeElementInfo + NodeElementNameSize;
 
+	const int nextBlockInfoSize = 12;
+
 
 public:
     FileSystem();
