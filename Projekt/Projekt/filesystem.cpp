@@ -541,6 +541,7 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 		while (read)
 		{
 			blockData = mMemblockDevice.readBlock(block).toString();
+			
 			output += blockData.substr(0, std::min(500, (int)blockData.find_last_not_of('\0')+1));
 
 			if (blockData[500] != '\0') {
@@ -572,45 +573,48 @@ bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 			// Failed to create file
 			return false;
 		}
+	
+		std::string blockContent = readFile(oldFilePath);
+		return (WriteFile(blockContent, newFilePath) == 1);
 
-		// Read all the contents of the file, even if it spans multiple block
-		Block b = mMemblockDevice[fi.blockIndex];
-		
-		std::string blockContent = b.toString();
-		blockContent.erase(500);
-		std::string content = blockContent;
-
-		while (b[500] != '\0')
-		{
-			// Index of next block
-			unsigned int nextBlock = (unsigned char)(b[510]) << 8 | (unsigned char)(b[511]);
-
-			// Load contents of next block
-			b = mMemblockDevice[nextBlock];
-			blockContent = b.toString();
-			blockContent.erase(500);
-
-			content.append(blockContent);
-		}
-
-		switch (WriteFile(content, newFilePath))
-		{
-		case 1:
-			// Copied successfully
-			return true;
-			break;
-		case -1:
-			// No more space for entire file
-			return false;
-			break;
-		case -2:
-			// File didn't exist
-			return false;
-			break;
-		default:
-			return false;
-			break;
-		}
+		//Block b = mMemblockDevice[fi.blockIndex];
+		//
+		//// Read all the contents of the file, even if it spans multiple block
+		//std::string blockContent = readFile(oldFilePath);
+		//
+		//std::string content = blockContent;
+		//
+		//while (b[500] != '\0')
+		//{
+		//	// Index of next block
+		//	unsigned int nextBlock = (unsigned char)(b[510]) << 8 | (unsigned char)(b[511]);
+		//
+		//	// Load contents of next block
+		//	b = mMemblockDevice[nextBlock];
+		//	blockContent += 
+		//	blockContent.erase(500);
+		//
+		//	content.append(blockContent);
+		//}
+		//
+		//switch (WriteFile(content, newFilePath))
+		//{
+		//case 1:
+		//	// Copied successfully
+		//	return true;
+		//	break;
+		//case -1:
+		//	// No more space for entire file
+		//	return false;
+		//	break;
+		//case -2:
+		//	// File didn't exist
+		//	return false;
+		//	break;
+		//default:
+		//	return false;
+		//	break;
+		//}
 	}
 
 	// Old file didn't exist or wasn't a flag
