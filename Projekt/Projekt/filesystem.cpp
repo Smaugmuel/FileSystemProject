@@ -510,11 +510,9 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 				block = (unsigned char)(blockData[510]) << 8 | (unsigned char)(blockData[511]);
 			}
 			else {
-				read == false;
+				read = false;
 			}
 		}
-
-		
 	}
 
 	//output = output.substr(0, output.find('\0'));
