@@ -45,7 +45,7 @@ public:
 	//Check if File/Folder Exist
 	FileInfo Exist(std::string path, int startBlock = -1);
 
-    /* This function creates a file or Folder in the filesystem. startBlock = -1 meens root, Returns Block id of created file( -1 if failed )*/
+    /* This function creates a file or Folder in the filesystem. startBlock = -1 means root, Returns Block id of created file( -1 if failed )*/
 	int Create(std::string fileName, char flag, int startBlock = -1);
 
     /* Removes a file or Folder in the filesystem */
@@ -54,7 +54,11 @@ public:
     /* Function will move the current location to a specified location in the filesystem */
     // goToFolder(...);
 
+	int WriteFile(std::string data, std::string path, unsigned int offset = 0, int startBlock = -1);
+
 	std::string readFile(std::string path, int startBlock = -1);
+
+	bool CopyFile(std::string oldFilePath, std::string newFilePath);
 
     /* This function will get all the files and folders in the specified folder */
     std::string listDir(std::string path, int startBlock = -1);
