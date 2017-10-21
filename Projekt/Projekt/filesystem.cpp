@@ -495,11 +495,29 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 	FileInfo fi = Exist(path, startBlock);
 
 	std::string output = "";
+	std::string blockData;
 	if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
-		output = mMemblockDevice.readBlock(fi.blockIndex).toString();
-		//output = output.substr(0, output.find('\0'));
+
+		bool read = true;
+		unsigned int block = fi.blockIndex;
+
+		while (read)
+		{
+			blockData = mMemblockDevice.readBlock(block).toString();
+			output += blockData.substr(0, 500);
+
+			if (blockData[500] != '\0') {
+				block = (unsigned char)(blockData[510]) << 8 | (unsigned char)(blockData[511]);
+			}
+			else {
+				read == false;
+			}
+		}
+
+		
 	}
 
+	//output = output.substr(0, output.find('\0'));
 	return output;
 }
 
