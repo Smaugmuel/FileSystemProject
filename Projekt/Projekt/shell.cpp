@@ -36,6 +36,8 @@ int main(void) {
 	//==============================================================================
 	int result;
 	
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+
 	result = fs.Create("/stuff.txt",FLAG_FILE);
 	if (result == -1) {
 		std::cout << "Failed To Create File(1)" << std::endl;
@@ -93,6 +95,17 @@ int main(void) {
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
+
+	//Will Try To Remove shit2 folder later with all files in it
+	fs.Create("/shit2/Hej/Test/Kissen2.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/Kissen3.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/Kissen4.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/Kissen5.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen1.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen2.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen3.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen4.txt", FLAG_FILE);
+
 	result = fs.Create("/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
@@ -111,7 +124,9 @@ int main(void) {
 	//REMOVE TEST
 	//====================================
 
-	bool res = fs.removeFile("/stuff.txt");
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace()/512 << " Blocks)" << std::endl;
+
+	bool res = fs.Remove("/stuff.txt");//Remove File (Stuff.txt)
 	if (!res) {
 		std::cout << "Failed To Remove File(1)" << std::endl;
 	}
@@ -119,6 +134,20 @@ int main(void) {
 		std::cout << "File Removed(1)" << std::endl;
 	}
 
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+
+	res = fs.Remove("/shit2");//Remove Folder With many sub fils & folders
+	if (!res) {
+		std::cout << "Failed To Remove File(1)" << std::endl;
+	}
+	else {
+		std::cout << "File Removed(1)" << std::endl;
+	}
+
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+
+	//LIST FILES IN DIRECTORY
+	//================================
 	std::cout << std::endl << fs.listDir("./") << std::endl;
 
 	//==============================================================================

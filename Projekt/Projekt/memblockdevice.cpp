@@ -79,8 +79,7 @@ Block& MemBlockDevice::operator[](int index) const {
 }
 
 int MemBlockDevice::spaceLeft() const {
-    /* Not yet implemented */
-    return 0;
+    return nrOfFreeBlocks;
 }
 
 int MemBlockDevice::writeBlock(int blockNr, const std::vector<char> &vec) {

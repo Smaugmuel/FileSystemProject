@@ -244,7 +244,7 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 
 }
 
-bool FileSystem::removeFile(std::string fileName, int startBlock)
+bool FileSystem::Remove(std::string fileName, int startBlock)
 {
 	if (startBlock == -1) {
 		startBlock == mRootStart;
@@ -260,8 +260,8 @@ bool FileSystem::removeFile(std::string fileName, int startBlock)
 		int blockSize = b.size(); //MaxBytes
 		const int maxRows = blockSize / rowSize;
 
-		int rowToRemove = 0;
-		int row = 0;
+		int rowToRemove = 2;
+		int row = 2;
 
 		bool found = false;
 		char a;
@@ -284,6 +284,65 @@ bool FileSystem::removeFile(std::string fileName, int startBlock)
 
 		mMemblockDevice.freeBlock(block);//Mark The File's Block as free, to free up the space
 		mMemblockDevice.writeBlock(parentBlock, b);//rewrite parrent folder block
+	}
+	else if (fi.exist && fi.flag == FLAG_DIRECTORY) {
+		
+		std::string folderItems = mMemblockDevice.readBlock(fi.blockIndex).toString();
+		int blockSize = folderItems.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+
+		//Start at row 2, Becuse Folder "." and ".." always exist inside a folder and shold not be removed(becuse of loops).
+		int row = 2;
+		char a;
+		bool result = true;
+
+		while ((a = folderItems[row*rowSize]) != 0 && row < maxRows)
+		{
+			std::string nameAtRow = folderItems.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			//Recursively remove all files in folder but is ineffective, will result in alot of read/write duplicates but should do the job.
+			if (!Remove(nameAtRow, fi.blockIndex))
+				result = false;
+
+			row++;
+		}
+
+		if (result) {//if all files in folder was removed, folder is safe to remove
+			int parentBlock = fi.parrentBlockIndex;
+			int block = fi.blockIndex;
+
+			std::string b = mMemblockDevice.readBlock(parentBlock).toString();
+			int blockSize = b.size(); //MaxBytes
+			const int maxRows = blockSize / rowSize;
+
+			int rowToRemove = 2;
+			int row = 2;
+
+			bool found = false;
+			char a;
+			while ((a = b[row*rowSize]) != 0 && row < maxRows)
+			{
+				std::string nameAtRow = b.substr(row*rowSize + nodeInfo, elementNameSize);//file/Foldername found in block
+				nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+				if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+					rowToRemove = row;
+				}
+
+				row++;
+			}
+
+			//Replace the "file to be removed"'s row in parrent to the last row in parrent
+			b.replace(b.begin() + (rowToRemove*rowSize), b.begin() + (rowToRemove*rowSize + rowSize), b.substr((row - 1)*rowSize, rowSize));
+			//Clear last Row in Parrent
+			b.replace(b.begin() + ((row - 1)*rowSize), b.begin() + ((row - 1)*rowSize + rowSize), rowSize, '\0');
+
+			mMemblockDevice.freeBlock(block);//Mark The File's Block as free, to free up the space
+			mMemblockDevice.writeBlock(parentBlock, b);//rewrite parrent folder block
+		}
+
+		return result;
 	}
 	else {
 		return false;
@@ -334,4 +393,9 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 
 
 	return output;
+}
+
+int FileSystem::freeSpace()
+{
+	return mMemblockDevice.spaceLeft()*512; //Hardcoded blocksize TODO: FIX
 }

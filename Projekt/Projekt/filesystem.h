@@ -42,11 +42,8 @@ public:
     /* This function creates a file or Folder in the filesystem. startBlock = -1 meens root, Returns Block id of created file( -1 if failed )*/
 	int Create(std::string fileName, char flag, int startBlock = -1);
 
-    /* Removes a file in the filesystem */
-    bool removeFile(std::string fileName, int startBlock = -1);
-
-    /* Removes a folder in the filesystem */
-    // removeFolder(...);
+    /* Removes a file or Folder in the filesystem */
+    bool Remove(std::string fileName, int startBlock = -1);
 
     /* Function will move the current location to a specified location in the filesystem */
     // goToFolder(...);
@@ -55,6 +52,7 @@ public:
     std::string listDir(std::string path, int startBlock = -1);
 
     /* Add your own member-functions if needed */
+	int freeSpace();
 };
 
 #endif // FILESYSTEM_H
