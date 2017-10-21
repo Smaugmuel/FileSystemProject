@@ -24,6 +24,7 @@ int main(void) {
 	std::string userCommand, commandArr[MAXCOMMANDS];
 	std::string user = "user@DV1492";    // Change this if you want another user to be displayed
 	std::string currentDir = "/";    // current directory, used for output
+	int currentDirectoryBlock;
 
     bool bRun = true;
 
@@ -171,10 +172,29 @@ int main(void) {
                 break;
             case 2: // ls
                 std::cout << "Listing directory" << std::endl;
+				std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << std::endl;
+
                 break;
             case 3: // create
+				if (nrOfCommands > 1) {
+					if (fs.Create(currentDir + commandArr[1], FLAG_FILE) != -1) {
+						std::cout << "Created File: " << commandArr[1] << std::endl;
+					}
+					else {
+						std::cout << "Could Not Create file: " << commandArr[1] << std::endl;
+					}
+				}
+				else {
+					std::cout << "Wrong Syntax! Insert Path to Create file" << std::endl;
+				}
                 break;
             case 4: // cat
+				if (nrOfCommands > 1) {
+					std::cout << fs.readFile(commandArr[1]) << std::endl;
+				}
+				else {
+					std::cout << "Wrong Syntax! Insert Path to Read from" << std::endl;
+				}
                 break;
             case 5: // createImage
                 break;

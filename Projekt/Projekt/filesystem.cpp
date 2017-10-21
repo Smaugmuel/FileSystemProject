@@ -351,6 +351,21 @@ bool FileSystem::Remove(std::string fileName, int startBlock)
 	return true;
 }
 
+std::string FileSystem::readFile(std::string path, int startBlock)
+{
+	if (startBlock == -1)
+		startBlock = mRootStart;
+
+	FileInfo fi = Exist(path, startBlock);
+
+	std::string output = "";
+	if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
+		output = mMemblockDevice.readBlock(fi.blockIndex).toString();
+	}
+
+	return output;
+}
+
 std::string FileSystem::listDir(std::string path, int startBlock)
 {
 	//Cannot List Root until "." and ".." Folders Exist
