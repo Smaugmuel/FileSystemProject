@@ -22,8 +22,7 @@ void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void PrintWorkingDirectory(const std::string& directory);
-
-
+void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 
 int main(void) {
 
@@ -197,6 +196,7 @@ int main(void) {
             case 6: // restoreImage
                 break;
             case 7: // rm
+				RemoveFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 8: // cp
 				CopyFile(nrOfCommands, fs, commandArr, currentDir);
@@ -365,4 +365,22 @@ void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 void PrintWorkingDirectory(const std::string& directory)
 {
 	std::cout << directory << "\n";
+}
+
+void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+	if (nrOfCommands > 1) {
+		for (int i = 1; i < nrOfCommands; i++)
+		{
+			bool res = fs.Remove(currentDir + commandArr[i]);//Remove File (Stuff.txt)
+			if (!res) {
+				std::cout << "Failed To Remove: " << commandArr[i] << std::endl;
+			}
+			else {
+				std::cout << "Removed: " << commandArr[i] << std::endl;
+			}
+		}
+	}
+	else {
+		std::cout << "Wrong sntax! type help for help" << std::endl;
+	}
 }

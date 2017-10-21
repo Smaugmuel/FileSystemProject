@@ -369,24 +369,84 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 	FileInfo fi = Exist(path, startBlock);
 
+	std::vector<std::string> blockData;
+
+
+	int skipBlocks = offset / 500;
+	int skipRest = offset % 500;
+
+	int size = data.size() + skipRest;
+	int elements = size / 500;
+	int rest = size % 500;
+
+	int blocksNeeded = elements + (rest == 0 ? 0 : 1);
+
+	int dataWritten = 0;
+
 	if (fi.exist /*&& fi.flag == FLAG_FILE*/)
 	{
-		std::string content = mMemblockDevice.readBlock(fi.blockIndex).toString();
+		std::string content;
+		unsigned int nextBlock = 0;
+		unsigned int currentBlock = fi.blockIndex;
 
-		// Limits to one block for now
-		if (offset + data.size() < BLOCK_SIZE_DEFAULT)
+
+		for (int i = 0; i < skipBlocks; i++)
 		{
-			// Replace block
-			content.replace(content.begin() + offset, content.begin() + (offset + data.size()), data.c_str());
-			
-			// 1: Success
-			// -1: Out of range
-			// -2: Varying sizes
-			return mMemblockDevice.writeBlock(fi.blockIndex, content);
+			content = mMemblockDevice.readBlock(currentBlock).toString();
+			if (content[500] != '\0') {
+				nextBlock = (unsigned char)(content[510]) << 8 | (unsigned char)(content[511]);
+			}
+			else {
+				nextBlock = mMemblockDevice.reservBlock();
+
+				if (nextBlock == -1)
+					return -1;
+
+				content[500] = FLAG_DIRECTORY;
+				content[510] = (unsigned char)((nextBlock >> 8) & 0xFF);
+				content[511] = (unsigned char)((nextBlock)& 0xFF);
+				mMemblockDevice.writeBlock(currentBlock, content);
+			}
 		}
 
-		// File existed but data couldn't fit in one block
-		return -3;
+		while (blocksNeeded-- > 0)
+		{
+			content = mMemblockDevice.readBlock(currentBlock).toString();
+
+			if (blocksNeeded == 0) {
+				std::string sub = data.substr(dataWritten, data.size());
+
+				content.replace(content.begin() + skipRest, content.begin() + (skipRest + sub.size()), sub.c_str());
+				dataWritten += skipRest + data.size() - dataWritten;
+			}
+			else {
+				std::string sub = data.substr(dataWritten, 500 - skipRest);
+
+				content.replace(content.begin() + skipRest, content.begin() + 500, sub.c_str());
+				dataWritten += 500 - skipRest;
+
+				if (content[500] != '\0') {
+					nextBlock = (unsigned char)(content[510]) << 8 | (unsigned char)(content[511]);
+				}
+				else {
+					int nextBlock_temp = mMemblockDevice.reservBlock();
+
+					if (nextBlock_temp == -1)
+						return -1;
+
+					content[500] = FLAG_DIRECTORY;
+					content[510] = (unsigned char)((nextBlock_temp >> 8) & 0xFF);
+					content[511] = (unsigned char)((nextBlock_temp)& 0xFF);
+				}
+			}
+
+			mMemblockDevice.writeBlock(currentBlock, content);
+			currentBlock = nextBlock;
+			skipRest = 0;
+		}
+
+		// Success
+		return 1;
 	}
 
 	// File didn't exist
@@ -403,7 +463,7 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 	std::string output = "";
 	if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
 		output = mMemblockDevice.readBlock(fi.blockIndex).toString();
-		output = output.substr(0, output.find('\0'));
+		//output = output.substr(0, output.find('\0'));
 	}
 
 	return output;
