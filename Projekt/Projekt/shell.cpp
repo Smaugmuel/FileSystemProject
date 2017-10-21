@@ -23,6 +23,7 @@ void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comman
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void PrintWorkingDirectory(const std::string& directory);
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 
 int main(void) {
 
@@ -59,7 +60,7 @@ int main(void) {
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/thing.abd", FLAG_FILE);
+	result = fs.Create("/th.a", FLAG_FILE);
 	if (result == -1) {
 		std::cout << "Failed To Create File(3)" << std::endl;
 	}
@@ -202,7 +203,7 @@ int main(void) {
 				CopyFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 9: // append
-
+				AppendFile(nrOfCommands,fs,commandArr,currentDir);
                 break;
             case 10: // mv
                 break;
@@ -382,5 +383,61 @@ void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 	}
 	else {
 		std::cout << "Wrong sntax! type help for help" << std::endl;
+	}
+}
+
+void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+	if (nrOfCommands == 2) {
+		std::string content;
+		getline(std::cin, content);
+		
+		switch (fs.AppendFile(content, currentDir + commandArr[1]))
+		{
+		case 1:
+			std::cout << "Wrote to file\n\n";
+			break;
+		case -1:
+			std::cout << "Couldn't write to file: Out of range\n\n";
+			break;
+		case -2:
+			std::cout << "Couldn't write to file: Wrong size\n\n";
+			break;
+		case -3:
+			std::cout << "Couldn't write to file: Content couldn't fit\n\n";
+			break;
+		case -4:
+			std::cout << "Couldn't write to file: File does not exist\n\n";
+			break;
+		default:
+			break;
+		}
+
+	}
+	else if (nrOfCommands == 3) {
+		std::string data = fs.readFile(currentDir + commandArr[1]);
+
+		switch (fs.AppendFile(data, currentDir + commandArr[2]))
+		{
+		case 1:
+			std::cout << "Wrote to file\n\n";
+			break;
+		case -1:
+			std::cout << "Couldn't write to file: Out of range\n\n";
+			break;
+		case -2:
+			std::cout << "Couldn't write to file: Wrong size\n\n";
+			break;
+		case -3:
+			std::cout << "Couldn't write to file: Content couldn't fit\n\n";
+			break;
+		case -4:
+			std::cout << "Couldn't write to file: File does not exist\n\n";
+			break;
+		default:
+			break;
+		}
+	}
+	else {
+		std::cout << "Wrong Syntax! Insert Path to Create file\n\n";
 	}
 }

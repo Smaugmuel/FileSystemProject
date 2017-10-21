@@ -491,6 +491,39 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 	return -2;
 }
 
+int FileSystem::AppendFile(std::string data, std::string path, int startBlock)
+{
+	FileInfo fi = Exist(path, startBlock);
+
+	std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+
+	int blockSize = b.size(); //MaxBytes
+	const int maxRows = blockSize / rowSize;
+	int row = 0;
+	bool found = false;
+	char a;
+	while ((a = b[row*rowSize]) != 0 && row < maxRows && !found)
+	{
+		std::string nameAtRow = b.substr(row*rowSize + NodeElementInfo, NodeElementNameSize);//file/Foldername found in block
+		nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+		//nameAtRow.size();
+
+		if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+
+			unsigned int fileSize = (unsigned char)(b[row*rowSize + 3]) >> 24 & 0xFF | (unsigned char)(b[row*rowSize + 4]) >> 16 & 0xFF | (unsigned char)(b[row*rowSize + 5]) >> 8 & 0xFF | (unsigned char)(b[row*rowSize + 6]) & 0xFF;
+
+			return WriteFile(data,path, fileSize,fi.parrentBlockIndex);
+
+			found = true;
+		}
+
+		row++;
+	}
+
+	return 0;
+}
+
 std::string FileSystem::readFile(std::string path, int startBlock)
 {
 	if (startBlock == -1)
@@ -508,7 +541,7 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 		while (read)
 		{
 			blockData = mMemblockDevice.readBlock(block).toString();
-			output += blockData.substr(0, 500);
+			output += blockData.substr(0, std::min(500, (int)blockData.find_last_not_of('\0')+1));
 
 			if (blockData[500] != '\0') {
 				block = (unsigned char)(blockData[510]) << 8 | (unsigned char)(blockData[511]);

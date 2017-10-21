@@ -57,6 +57,7 @@ public:
     // goToFolder(...);
 
 	int WriteFile(std::string data, std::string path, unsigned int offset = 0, int startBlock = -1);
+	int AppendFile(std::string data, std::string path, int startBlock = -1);
 
 	std::string readFile(std::string path, int startBlock = -1);
 
