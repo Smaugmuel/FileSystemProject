@@ -17,6 +17,12 @@ bool quit();
 std::string help();
 
 /* More functions ... */
+void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[]);
+void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void PrintWorkingDirectory(const std::string& directory);
+
 
 
 int main(void) {
@@ -29,12 +35,13 @@ int main(void) {
     bool bRun = true;
 
 
-	FileSystem fs;
-	//fs.createFolder("/hello world");
-	
+	FileSystem fs;	
 
 	//File Test
 	//==============================================================================
+	
+#pragma region Tests
+	
 	int result;
 	
 	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
@@ -153,7 +160,13 @@ int main(void) {
 
 	//==============================================================================
 
+#pragma endregion 
 
+
+	// NOTE
+	//----------------------
+	// Currently, commands aren't looped when multiple are inserted
+	// ls stuff   <=>   ls stuff stuff2
 
     do {
         std::cout << user << ":" << currentDir << "$ ";
@@ -171,30 +184,13 @@ int main(void) {
             case 1: // format
                 break;
             case 2: // ls
-                std::cout << "Listing directory" << std::endl;
-				std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << std::endl;
-
+				ListDirectory(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 3: // create
-				if (nrOfCommands > 1) {
-					if (fs.Create(currentDir + commandArr[1], FLAG_FILE) != -1) {
-						std::cout << "Created File: " << commandArr[1] << std::endl;
-					}
-					else {
-						std::cout << "Could Not Create file: " << commandArr[1] << std::endl;
-					}
-				}
-				else {
-					std::cout << "Wrong Syntax! Insert Path to Create file" << std::endl;
-				}
+				CreateFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 4: // cat
-				if (nrOfCommands > 1) {
-					std::cout << fs.readFile(commandArr[1]) << std::endl;
-				}
-				else {
-					std::cout << "Wrong Syntax! Insert Path to Read from" << std::endl;
-				}
+				Catenate(nrOfCommands, fs, commandArr);
                 break;
             case 5: // createImage
                 break;
@@ -203,6 +199,7 @@ int main(void) {
             case 7: // rm
                 break;
             case 8: // cp
+				CopyFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 9: // append
                 break;
@@ -213,6 +210,7 @@ int main(void) {
             case 12: // cd
                 break;
             case 13: // pwd
+				PrintWorkingDirectory(currentDir);
                 break;
             case 14: // help
                 std::cout << help() << std::endl;
@@ -276,3 +274,90 @@ std::string help() {
 }
 
 /* Insert code for your shell functions and call them from the switch-case */
+
+void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+{
+	if (nrOfCommands > 1) {
+		if (fs.Create(currentDir + commandArr[1], FLAG_FILE) != -1) {
+			std::cout << "Created File: " << commandArr[1] << "\nInsert content: ";
+
+			std::string content;
+			getline(std::cin, content);
+
+			switch (fs.WriteFile(content, currentDir + commandArr[1]))
+			{
+			case 1:
+				std::cout << "Wrote to file\n\n";
+				break;
+			case -1:
+				std::cout << "Couldn't write to file: Out of range\n\n";
+				break;
+			case -2:
+				std::cout << "Couldn't write to file: Wrong size\n\n";
+				break;
+			case -3:
+				std::cout << "Couldn't write to file: Content couldn't fit\n\n";
+				break;
+			case -4:
+				std::cout << "Couldn't write to file: File does not exist\n\n";
+				break;
+			default:
+				break;
+			}
+		}
+		else {
+			std::cout << "Could Not Create file: " << commandArr[1] << "\n\n";
+		}
+	}
+	else {
+		std::cout << "Wrong Syntax! Insert Path to Create file\n\n";
+	}
+}
+
+void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[])
+{
+	if (nrOfCommands > 1) {
+		std::cout << fs.readFile(commandArr[1]) << "\n\n";
+	}
+	else {
+		std::cout << "Wrong Syntax! Insert Path to Read from\n\n";
+	}
+}
+
+void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+{
+	std::cout << "Listing directory\n";
+	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << "\n\n";
+}
+
+void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+{
+	if (nrOfCommands > 2) {
+		std::string fileData = fs.readFile(commandArr[1]);
+		if (fileData.compare("") != 0)
+		{
+			if (fs.Create(currentDir + commandArr[2], FLAG_FILE) != -1)
+			{
+				std::cout << "Created file: " << commandArr[2] << " as copy of file: " << commandArr[1] << "\n\n";
+				
+			}
+			else
+			{
+				std::cout << "Could not create file: " << commandArr[2] << "\n\n";
+			}
+		}
+		else
+		{
+			std::cout << "Could not copy file: " << commandArr[1] << " since it has no content or does not exist\n\n";
+		}
+	}
+	else
+	{
+		std::cout << "Wrong Syntax! Insert Path to Create file\n\n";
+	}
+}
+
+void PrintWorkingDirectory(const std::string& directory)
+{
+	std::cout << directory << "\n";
+}

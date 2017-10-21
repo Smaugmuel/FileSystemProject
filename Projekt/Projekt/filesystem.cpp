@@ -351,6 +351,37 @@ bool FileSystem::Remove(std::string fileName, int startBlock)
 	return true;
 }
 
+int FileSystem::WriteFile(std::string data, std::string path, unsigned int offset, int startBlock)
+{
+	if (startBlock == -1)
+		startBlock = mRootStart;
+
+	FileInfo fi = Exist(path, startBlock);
+
+	if (fi.exist /*&& fi.flag == FLAG_FILE*/)
+	{
+		std::string content = mMemblockDevice.readBlock(fi.blockIndex).toString();
+
+		// Limits to one block for now
+		if (offset + data.size() < 512)
+		{
+			// Replace block
+			content.replace(content.begin() + offset, content.begin() + (offset + data.size()), data.c_str());
+			
+			// 1: Success
+			// -1: Out of range
+			// -2: Varying sizes
+			return mMemblockDevice.writeBlock(fi.blockIndex, content);
+		}
+
+		// File existed but data couldn't fit in one block
+		return -3;
+	}
+
+	// File didn't exist
+	return -4;
+}
+
 std::string FileSystem::readFile(std::string path, int startBlock)
 {
 	if (startBlock == -1)
@@ -361,9 +392,39 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 	std::string output = "";
 	if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
 		output = mMemblockDevice.readBlock(fi.blockIndex).toString();
+		output = output.substr(0, output.find('\0'));
 	}
 
 	return output;
+}
+
+bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
+{
+	//if (startBlock == -1)
+	//	startBlock = mRootStart;
+
+	//FileInfo fi = Exist(path, startBlock);
+
+	//std::string output = "";
+	//if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
+	//	output = mMemblockDevice.readBlock(fi.blockIndex).toString();
+	//	output = output.substr(0, output.find('\0'));
+	//}
+
+	//if (content.compare("") != 0)
+	//{
+	//	// File has content
+
+	//	// Limits to one block for now
+	//	if (offset + data.size() < 512)
+	//	{
+	//		// Replace block
+	//		content.replace(content.begin() + offset, content.begin() + (offset + data.size()), data.c_str());
+
+	//	}
+	//}
+
+	return false;
 }
 
 std::string FileSystem::listDir(std::string path, int startBlock)
