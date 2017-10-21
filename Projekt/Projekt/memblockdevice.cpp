@@ -19,7 +19,7 @@ void MemBlockDevice::changeBlockStatus(int blockNr, bool used)
 	Exempel	Values	[0] [1] [0] [1] [1] [1] [0] [0]	-	[0] [1] [1] [0] [0] [1] [1] [0]		-	[1] [0] [0] [1] [1] [0] [0] [0]		-	[?]    [?]    [?]    [?]    [?]    [?]    [?]    [?]
 	BlockStatus		[F] [U] [F] [U] [U] [U] [F] [F]	-	[F] [U] [U] [F] [F] [U] [U] [F]		-	[U] [F] [F] [U] [U] [F] [F] [F]		-	[?]    [?]    [?]    [?]    [?]    [?]    [?]    [?]
 	Block/Bit id	[7] [6] [5] [4] [3] [2] [1] [0]	-	[15][14][13][12][11][10][9] [8]		-	[23][22][21][20][19][18][17][16]	-	[N*8+7][N*8+6][N*8+5][N*8+4][N*8+3][N*8+2][N*8+1][N*8]
-	RelativeBitId	[8] [7] [6] [5] [4] [3] [2] [1]	-	[7] [6] [5] [4] [3] [2] [1] [0]		-	[7] [6] [5] [4] [3] [2] [1] [0]		-	[7]    [6]    [5]    [4]    [3]    [2]    [1]    [0]
+	RelativeBitId	[7] [6] [5] [4] [3] [2] [1] [0]	-	[7] [6] [5] [4] [3] [2] [1] [0]		-	[7] [6] [5] [4] [3] [2] [1] [0]		-	[7]    [6]    [5]    [4]    [3]    [2]    [1]    [0]
 
 	*/
 
@@ -31,7 +31,7 @@ void MemBlockDevice::changeBlockStatus(int blockNr, bool used)
 	if (used) {//If true, set status bit for the desired block to a 1(in use)
 		if (currentStatus == 0) {//Checks if bit not allredy is equal to 1
 			statusByte |= used << (blockNr % 8);
-			nrOfFreeBlocks--;;//decrese nr of free blocks
+			nrOfFreeBlocks--;//decrese nr of free blocks
 		}
 	}
 	else {//If false, set status bit for the desired block to a 0(not in use)

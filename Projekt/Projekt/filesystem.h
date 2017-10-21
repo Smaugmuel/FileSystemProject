@@ -10,8 +10,8 @@ struct FileInfo {
 	bool exist;
 	std::string fileName;
 	char flag;
-	int blockIndex;
-	int parrentBlockIndex;
+	unsigned int blockIndex;
+	unsigned int parrentBlockIndex;
 };
 
 class FileSystem
@@ -23,9 +23,15 @@ private:
 	//unsigned int mBlockCount;
 
     // Here you can add your own data structures
-	const int elementNameSize = 13;
-	const int nodeInfo = 3;
-	const int rowSize = nodeInfo + elementNameSize;
+	
+	const int NodeFlagSize = 1;
+	const int NodeBlockIndexSize = 2;
+	const int NodeElementSizeSize = 4;
+
+	const int NodeElementInfo = NodeFlagSize + NodeBlockIndexSize + NodeElementSizeSize;//Sum Of All Above
+	const int NodeElementNameSize = 25;
+	
+	const int rowSize = NodeElementInfo + NodeElementNameSize;
 
 
 public:

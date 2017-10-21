@@ -202,12 +202,25 @@ int main(void) {
 				CopyFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 9: // append
+
                 break;
             case 10: // mv
                 break;
             case 11: // mkdir
+				if (nrOfCommands > 1) {
+					if (fs.Create(currentDir + commandArr[1], FLAG_DIRECTORY) != -1) {
+						std::cout << "Created Directory: " << commandArr[1] << std::endl;
+					}
+					else {
+						std::cout << "Could Not Create Directory: " << commandArr[1] << std::endl;
+					}
+				}
+				else {
+					std::cout << "Wrong Syntax! Insert Path to Create Directory" << std::endl;
+				}
                 break;
             case 12: // cd
+
                 break;
             case 13: // pwd
 				PrintWorkingDirectory(currentDir);
