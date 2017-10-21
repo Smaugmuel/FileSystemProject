@@ -92,6 +92,21 @@ FileInfo FileSystem::Exist(std::string path, int startBlock)
 
 FileSystem::FileSystem() {
 	mRootStart = mMemblockDevice.reservBlock();//TODO:: ERROR hadeling if reservBlock() returns -1
+
+	std::string b = mMemblockDevice.readBlock(mRootStart).toString();
+
+	//Add folder "." pointing to itself
+	b[0] = FLAG_DIRECTORY;
+	b[1] = mRootStart;//
+	b.replace(b.begin() + (0*rowSize + nodeInfo), b.begin() + (0*rowSize + nodeInfo + 1), ".");
+
+	//Add folder ".." pointing to parrent(itself becuse root)
+	b[1*rowSize] = FLAG_DIRECTORY;
+	b[1*rowSize+1] = mRootStart;//
+	b.replace(b.begin() + (1*rowSize + nodeInfo), b.begin() + (1*rowSize + nodeInfo + 2), "..");
+
+	//Rewrite root block
+	mMemblockDevice.writeBlock(mRootStart,b);
 }
 
 FileSystem::~FileSystem() {
@@ -203,6 +218,26 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 		data.replace(data.begin() + (row*rowSize + nodeInfo), data.begin() + (row*rowSize + nodeInfo + name.size()), name);
 
 		mMemblockDevice.writeBlock(block, data);
+
+		//===========================
+		//Reset and Config new data block
+		b = mMemblockDevice.readBlock(blockIndex).toString();
+		b.replace(b.begin(), b.end(), blockSize, '\0');
+		if (flag == FLAG_DIRECTORY) {
+			//Add folder "." pointing to itself
+			b[0] = FLAG_DIRECTORY;
+			b[1] = blockIndex;//
+			b.replace(b.begin() + (0*rowSize + nodeInfo), b.begin() + (0*rowSize + nodeInfo + 1), ".");
+
+			//Add folder ".." pointing to parrent
+			b[1*rowSize] = FLAG_DIRECTORY;
+			b[1*rowSize+1] = block;//
+			b.replace(b.begin() + (1*rowSize + nodeInfo), b.begin() + (1*rowSize + nodeInfo + 2), "..");
+		}
+
+		//Rewrite new block
+		mMemblockDevice.writeBlock(blockIndex,b);
+
 
 		return blockIndex;//Return block index of created file/folder
 	}

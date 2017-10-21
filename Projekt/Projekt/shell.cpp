@@ -119,7 +119,7 @@ int main(void) {
 		std::cout << "File Removed(1)" << std::endl;
 	}
 
-	std::cout << std::endl << fs.listDir("/shit2/Hej/Test/") << std::endl;
+	std::cout << std::endl << fs.listDir("./") << std::endl;
 
 	//==============================================================================
 
