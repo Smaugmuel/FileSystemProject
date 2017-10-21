@@ -38,6 +38,9 @@ public:
     int writeBlock(const std::vector<char> &vec);
     void writeBlock(const char cArr[]);     // Use with caution! Make sure that cArr is at least as large as private member block.
 
+	int write(const std::string &strData, int offset);
+	int write(const char cData, int offset);
+
     std::string toString() const;
 	std::string toString(int start, int end) const;
 };

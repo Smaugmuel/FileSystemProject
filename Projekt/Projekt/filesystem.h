@@ -3,12 +3,30 @@
 
 #include "memblockdevice.h"
 
+const char FLAG_FILE = 'f';
+const char FLAG_DIRECTORY = 'd';
+
+struct FileInfo {
+	bool exist;
+	std::string fileName;
+	char flag;
+	int blockIndex;
+	int parrentBlockIndex;
+};
+
 class FileSystem
 {
 private:
     MemBlockDevice mMemblockDevice;
-	unsigned int mBlockCount;
+
+	unsigned int mRootStart;
+	//unsigned int mBlockCount;
+
     // Here you can add your own data structures
+	const int elementNameSize = 13;
+	const int nodeInfo = 3;
+	const int rowSize = nodeInfo + elementNameSize;
+
 
 public:
     FileSystem();
@@ -18,27 +36,25 @@ public:
 	   You are free to specify parameter lists and return values
     */
 
-    /* This function creates a file in the filesystem */
-    // createFile(...)
-	bool createFile(std::string fileName);
+	//Check if File/Folder Exist
+	FileInfo Exist(std::string path, int startBlock = -1);
 
-    /* Creates a folder in the filesystem */
-    // createFolderi(...);
-	bool createFolder(std::string folderName);
+    /* This function creates a file or Folder in the filesystem. startBlock = -1 meens root, Returns Block id of created file( -1 if failed )*/
+	int Create(std::string fileName, char flag, int startBlock = -1);
 
-    /* Removes a file in the filesystem */
-    // removeFile(...);
-
-    /* Removes a folder in the filesystem */
-    // removeFolder(...);
+    /* Removes a file or Folder in the filesystem */
+    bool Remove(std::string fileName, int startBlock = -1);
 
     /* Function will move the current location to a specified location in the filesystem */
     // goToFolder(...);
 
+	std::string readFile(std::string path, int startBlock = -1);
+
     /* This function will get all the files and folders in the specified folder */
-    // listDir(...);
+    std::string listDir(std::string path, int startBlock = -1);
 
     /* Add your own member-functions if needed */
+	int freeSpace();
 };
 
 #endif // FILESYSTEM_H

@@ -89,6 +89,31 @@ void Block::writeBlock(const char cArr[]) {
     }
 }
 
+int Block::write(const std::string & strData, int offset)
+{
+	int output = -2;    // Assume out of range
+	int size = strData.size();
+	if (size + offset <= (unsigned long)this->nrOfElements) {
+		for (int i = offset; i < offset + size; ++i) {
+			this->block[i] = strData[i];
+		}
+		output = 1;
+	}
+
+	return output;
+}
+
+int Block::write(const char cData, int offset)
+{
+	int output = -2;    // Assume out of range
+	if (offset < (unsigned long)this->nrOfElements) {
+		this->block[offset] = cData;
+		output = 1;
+	}
+
+	return output;
+}
+
 std::string Block::toString() const {
     std::string output;
     output.reserve(this->nrOfElements);

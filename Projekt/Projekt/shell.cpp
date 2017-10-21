@@ -24,16 +24,136 @@ int main(void) {
 	std::string userCommand, commandArr[MAXCOMMANDS];
 	std::string user = "user@DV1492";    // Change this if you want another user to be displayed
 	std::string currentDir = "/";    // current directory, used for output
+	int currentDirectoryBlock;
 
     bool bRun = true;
 
 
 	FileSystem fs;
 	//fs.createFolder("/hello world");
-	fs.createFile("/stuff.txt");
-	fs.createFolder("/shit");
-	fs.createFile("/thing.abd");
-	fs.createFile("/shit/stuff.txt");
+	
+
+	//File Test
+	//==============================================================================
+	int result;
+	
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+
+	result = fs.Create("/stuff.txt",FLAG_FILE);
+	if (result == -1) {
+		std::cout << "Failed To Create File(1)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit", FLAG_DIRECTORY);
+	if (result == -1) {
+		std::cout << "Failed To Create File(2)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/thing.abd", FLAG_FILE);
+	if (result == -1) {
+		std::cout << "Failed To Create File(3)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit/stuff.txt", FLAG_FILE);
+	if (result == -1) {
+		std::cout << "Failed To Create File(4)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+
+	result = fs.Create("/shit2/Hej/Test/stuff.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File(5)" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/Bajs.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/stuff2.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/Kissen.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+
+	//Will Try To Remove shit2 folder later with all files in it
+	fs.Create("/shit2/Hej/Test/Kissen2.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/Kissen3.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/Kissen4.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/Kissen5.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen1.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen2.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen3.txt", FLAG_FILE);
+	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen4.txt", FLAG_FILE);
+
+	result = fs.Create("/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+	result = fs.Create("/shit2/Hej/Test/Mapp2", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
+	if (result == -1) {
+		std::cout << "Failed To Create File" << std::endl;
+	}
+	else {
+		std::cout << "File created at Block: " << result << std::endl;
+	}
+
+	//REMOVE TEST
+	//====================================
+
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace()/512 << " Blocks)" << std::endl;
+
+	bool res = fs.Remove("/stuff.txt");//Remove File (Stuff.txt)
+	if (!res) {
+		std::cout << "Failed To Remove File(1)" << std::endl;
+	}
+	else {
+		std::cout << "File Removed(1)" << std::endl;
+	}
+
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+
+	res = fs.Remove("/shit2");//Remove Folder With many sub fils & folders
+	if (!res) {
+		std::cout << "Failed To Remove File(1)" << std::endl;
+	}
+	else {
+		std::cout << "File Removed(1)" << std::endl;
+	}
+
+	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / 512 << " Blocks)" << std::endl;
+
+	//LIST FILES IN DIRECTORY
+	//================================
+	std::cout << std::endl << fs.listDir("./") << std::endl;
+
+	//==============================================================================
+
+
 
     do {
         std::cout << user << ":" << currentDir << "$ ";
@@ -52,10 +172,29 @@ int main(void) {
                 break;
             case 2: // ls
                 std::cout << "Listing directory" << std::endl;
+				std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << std::endl;
+
                 break;
             case 3: // create
+				if (nrOfCommands > 1) {
+					if (fs.Create(currentDir + commandArr[1], FLAG_FILE) != -1) {
+						std::cout << "Created File: " << commandArr[1] << std::endl;
+					}
+					else {
+						std::cout << "Could Not Create file: " << commandArr[1] << std::endl;
+					}
+				}
+				else {
+					std::cout << "Wrong Syntax! Insert Path to Create file" << std::endl;
+				}
                 break;
             case 4: // cat
+				if (nrOfCommands > 1) {
+					std::cout << fs.readFile(commandArr[1]) << std::endl;
+				}
+				else {
+					std::cout << "Wrong Syntax! Insert Path to Read from" << std::endl;
+				}
                 break;
             case 5: // createImage
                 break;
