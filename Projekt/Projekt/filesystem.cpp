@@ -401,6 +401,8 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 				if (nextBlock == -1)
 					return -1;
 
+				mMemblockDevice[nextBlock].reset();
+
 				content[500] = FLAG_DIRECTORY;
 				content[510] = (unsigned char)((nextBlock >> 8) & 0xFF);
 				content[511] = (unsigned char)((nextBlock)& 0xFF);
@@ -428,14 +430,16 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 					nextBlock = (unsigned char)(content[510]) << 8 | (unsigned char)(content[511]);
 				}
 				else {
-					int nextBlock_temp = mMemblockDevice.reservBlock();
+					nextBlock = mMemblockDevice.reservBlock();
 
-					if (nextBlock_temp == -1)
+					if (nextBlock == -1)
 						return -1;
 
+					mMemblockDevice[nextBlock].reset();
+
 					content[500] = FLAG_DIRECTORY;
-					content[510] = (unsigned char)((nextBlock_temp >> 8) & 0xFF);
-					content[511] = (unsigned char)((nextBlock_temp)& 0xFF);
+					content[510] = (unsigned char)((nextBlock >> 8) & 0xFF);
+					content[511] = (unsigned char)((nextBlock)& 0xFF);
 				}
 			}
 
