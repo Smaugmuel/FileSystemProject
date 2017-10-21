@@ -21,6 +21,7 @@ void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[]);
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void MakeDirectory(FileSystem& fs);
 void PrintWorkingDirectory(const std::string& directory);
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 
@@ -354,6 +355,25 @@ void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 		else
 		{
 			std::cout << "Failed to copy file " << commandArr[1] << "\n\n";
+		}
+	}
+	else
+	{
+		std::cout << "Wrong syntax! Type help for correct syntax\n\n";
+	}
+}
+
+void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+{
+	if (nrOfCommands > 1)
+	{
+		if (fs.Create(commandArr[1], FLAG_DIRECTORY) != -1)
+		{
+			std::cout << "Created directory " << commandArr[1] << "\n\n";
+		}
+		else
+		{
+			std::cout << "Failed to create directory " << commandArr[1] << "\n\n";
 		}
 	}
 	else
