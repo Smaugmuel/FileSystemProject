@@ -403,25 +403,23 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 				content[500] = FLAG_DIRECTORY;
 				content[510] = (unsigned char)((nextBlock >> 8) & 0xFF);
-				content[511] = (unsigned char)((nextBlock) & 0xFF);
+				content[511] = (unsigned char)((nextBlock)& 0xFF);
 				mMemblockDevice.writeBlock(currentBlock, content);
 			}
-
-			currentBlock = nextBlock;
 		}
 
 		while (blocksNeeded-- > 0)
 		{
 			content = mMemblockDevice.readBlock(currentBlock).toString();
-			
+
 			if (blocksNeeded == 0) {
-				std::string sub = data.substr(dataWritten,data.size());
+				std::string sub = data.substr(dataWritten, data.size());
 
 				content.replace(content.begin() + skipRest, content.begin() + (skipRest + sub.size()), sub.c_str());
 				dataWritten += skipRest + data.size() - dataWritten;
 			}
 			else {
-				std::string sub = data.substr(dataWritten, 500-skipRest);
+				std::string sub = data.substr(dataWritten, 500 - skipRest);
 
 				content.replace(content.begin() + skipRest, content.begin() + 500, sub.c_str());
 				dataWritten += 500 - skipRest;
@@ -437,7 +435,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 					content[500] = FLAG_DIRECTORY;
 					content[510] = (unsigned char)((nextBlock_temp >> 8) & 0xFF);
-					content[511] = (unsigned char)((nextBlock_temp) & 0xFF);
+					content[511] = (unsigned char)((nextBlock_temp)& 0xFF);
 				}
 			}
 
@@ -486,7 +484,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 	}
 
 	// File didn't exist
-	return -4;
+	return -2;
 }
 
 std::string FileSystem::readFile(std::string path, int startBlock)
@@ -507,30 +505,62 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 
 bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 {
-	//if (startBlock == -1)
-	//	startBlock = mRootStart;
+	FileInfo fi = Exist(oldFilePath, mRootStart);
 
-	//FileInfo fi = Exist(path, startBlock);
+	if (fi.exist && fi.flag == FLAG_FILE)
+	{
+		// oldFilePath is valid
 
-	//std::string output = "";
-	//if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
-	//	output = mMemblockDevice.readBlock(fi.blockIndex).toString();
-	//	output = output.substr(0, output.find('\0'));
-	//}
+		// Create the new file
+		int blockId = Create(newFilePath, FLAG_FILE);
 
-	//if (content.compare("") != 0)
-	//{
-	//	// File has content
+		if (blockId == -1)
+		{
+			// Failed to create file
+			return false;
+		}
 
-	//	// Limits to one block for now
-	//	if (offset + data.size() < 512)
-	//	{
-	//		// Replace block
-	//		content.replace(content.begin() + offset, content.begin() + (offset + data.size()), data.c_str());
+		// Read all the contents of the file, even if it spans multiple block
+		Block b = mMemblockDevice[fi.blockIndex];
+		
+		std::string blockContent = b.toString();
+		blockContent.erase(500);
+		std::string content = blockContent;
 
-	//	}
-	//}
+		while (b[500] != '\0')
+		{
+			// Index of next block
+			unsigned int nextBlock = (unsigned char)(b[510]) << 8 | (unsigned char)(b[511]);
 
+			// Load contents of next block
+			b = mMemblockDevice[nextBlock];
+			blockContent = b.toString();
+			blockContent.erase(500);
+
+			content.append(blockContent);
+		}
+
+		switch (WriteFile(content, newFilePath))
+		{
+		case 1:
+			// Copied successfully
+			return true;
+			break;
+		case -1:
+			// No more space for entire file
+			return false;
+			break;
+		case -2:
+			// File didn't exist
+			return false;
+			break;
+		default:
+			return false;
+			break;
+		}
+	}
+
+	// Old file didn't exist or wasn't a flag
 	return false;
 }
 
@@ -586,6 +616,5 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 
 int FileSystem::freeSpace()
 {
-	return mMemblockDevice.spaceLeft() * 512; //Hardcoded blocksize TODO: FIX
+	return mMemblockDevice.spaceLeft() * BLOCK_SIZE_DEFAULT; //Hardcoded blocksize TODO: FIX
 }
-

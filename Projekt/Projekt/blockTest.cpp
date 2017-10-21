@@ -3,15 +3,13 @@
 #include "blockdevice.h"
 #include <stdexcept>      // std::out_of_range
 
-const int SIZE = 512;
-
 int main(void) {
-    Block *a = new Block(SIZE);
+    Block *a = new Block(BLOCK_SIZE_DEFAULT);
 
     /* Testing writeBlock with char-arr */
 	std::cout << "Testing writeBlock char-array" << std::endl;
-    char tmpArr[SIZE-3];
-    for (int i = 0; i < SIZE-3; ++i)
+    char tmpArr[BLOCK_SIZE_DEFAULT -3];
+    for (int i = 0; i < BLOCK_SIZE_DEFAULT -3; ++i)
         tmpArr[i] = (('a'+ i)%25 + 'a');
     std::cout << "Writing char arr to block: ";
 
@@ -20,7 +18,7 @@ int main(void) {
 
     /* Testing writeBlock with vec<char> */
     std::vector<char> blas;
-    for (int i = 0; i < SIZE+3; ++i) {
+    for (int i = 0; i < BLOCK_SIZE_DEFAULT+3; ++i) {
         blas.push_back(('a' + i)%25 + 'a');
     }
 	std::cout << "Vec size: " << blas.size() << std::endl;
@@ -32,7 +30,7 @@ int main(void) {
         std::cout << "Failed!\n";
 
 	std::cout << "Testing [ ] - operator!\n";
-    for (int i = 0; i < SIZE; ++i) {
+    for (int i = 0; i < BLOCK_SIZE_DEFAULT; ++i) {
         try {
 				std::cout << a->operator [](i);
         }
@@ -43,8 +41,8 @@ int main(void) {
 	std::cout << std::endl << std::endl;
     /* Testing writeBlock with std::string */
 	std::string strBlock;
-    strBlock.resize(SIZE);
-    for (int i = 0; i < SIZE; ++i) {
+    strBlock.resize(BLOCK_SIZE_DEFAULT);
+    for (int i = 0; i < BLOCK_SIZE_DEFAULT; ++i) {
         strBlock[i] = (('a' + i)%25 + 'a');
     }
 	std::cout << "StrBlock:\n\t" << strBlock << std::endl;
@@ -57,7 +55,7 @@ int main(void) {
         std::cout << "Failed!\n";
 
 	std::cout << "Testing [ ] - operator!\n";
-    for (int i = 0; i < SIZE; ++i) {
+    for (int i = 0; i < BLOCK_SIZE_DEFAULT; ++i) {
         try {
 				std::cout << a->operator [](i);
         }

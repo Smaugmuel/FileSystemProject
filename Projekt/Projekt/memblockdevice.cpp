@@ -11,7 +11,7 @@ void MemBlockDevice::changeBlockStatus(int blockNr, bool used)
 	/*
 	
 	Block 0's structure Explained in image.
-	Known "Bug": a maximum of 8 bit * 512 bytes = 4096 free blocks is allowed for now. But we only use 250 blocks so it is fine!
+	Known "Bug": a maximum of 8 bit * BLOCK_SIZE_DEFAULT bytes = 4096 free blocks is allowed for now. But we only use 250 blocks so it is fine!
 
 	//F = Free, U = Used
 
