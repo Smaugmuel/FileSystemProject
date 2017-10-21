@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include "filesystem.h"
+#include <algorithm>
 
 const int MAXCOMMANDS = 8;
 const int NUMAVAILABLECOMMANDS = 15;
@@ -18,13 +19,17 @@ std::string help();
 
 /* More functions ... */
 void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[]);
+void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void PrintWorkingDirectory(const std::string& directory);
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+std::string TrimPath(std::string path);
+
+std::string ProcessPath(std::string cd, std::string extraPath);
 
 int main(void) {
 
@@ -191,7 +196,7 @@ int main(void) {
 				CreateFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 4: // cat
-				Catenate(nrOfCommands, fs, commandArr);
+				Catenate(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 5: // createImage
                 break;
@@ -212,7 +217,7 @@ int main(void) {
 				MakeDirectory(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 12: // cd
-
+				ChangeDirectory(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 13: // pwd
 				PrintWorkingDirectory(currentDir);
@@ -283,13 +288,13 @@ std::string help() {
 void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	if (nrOfCommands > 1) {
-		if (fs.Create(currentDir + commandArr[1], FLAG_FILE) != -1) {
+		if (fs.Create(ProcessPath(currentDir, commandArr[1]), FLAG_FILE) != -1) {
 			std::cout << "Created File: " << commandArr[1] << "\nInsert content: ";
 
 			std::string content;
 			getline(std::cin, content);
 
-			switch (fs.WriteFile(content, currentDir + commandArr[1]))
+			switch (fs.WriteFile(content, ProcessPath(currentDir, commandArr[1])))
 			{
 			case 1:
 				std::cout << "Wrote to file\n\n";
@@ -319,10 +324,10 @@ void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 	}
 }
 
-void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[])
+void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	if (nrOfCommands > 1) {
-		std::cout << fs.readFile(commandArr[1]) << "\n\n";
+		std::cout << fs.readFile(ProcessPath(currentDir, commandArr[1])) << "\n\n";
 	}
 	else {
 		std::cout << "Wrong Syntax! Insert Path to Read from\n\n";
@@ -332,14 +337,14 @@ void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	std::cout << "Listing directory\n";
-	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? commandArr[1] : ".")) << "\n";
+	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? ProcessPath(currentDir, commandArr[1]) : ".")) << "\n";
 }
 
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	if (nrOfCommands > 2)
 	{
-		if (fs.CopyFile(currentDir + commandArr[1], currentDir + commandArr[2]))
+		if (fs.CopyFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
 			std::cout << "Created file " << commandArr[2] << " as a copy of " << commandArr[1] << "\n\n";
 		}
@@ -358,7 +363,7 @@ void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comman
 {
 	if (nrOfCommands > 1)
 	{
-		if (fs.Create(currentDir + commandArr[1], FLAG_DIRECTORY) != -1)
+		if (fs.Create(ProcessPath(currentDir, commandArr[1]), FLAG_DIRECTORY) != -1)
 		{
 			std::cout << "Created directory " << commandArr[1] << "\n\n";
 		}
@@ -382,7 +387,7 @@ void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 	if (nrOfCommands > 1) {
 		for (int i = 1; i < nrOfCommands; i++)
 		{
-			bool res = fs.Remove(currentDir + commandArr[i]);//Remove File (Stuff.txt)
+			bool res = fs.Remove(ProcessPath(currentDir, commandArr[1]));//Remove File (Stuff.txt)
 			if (!res) {
 				std::cout << "Failed To Remove: " << commandArr[i] << std::endl;
 			}
@@ -401,7 +406,7 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 		std::string content;
 		getline(std::cin, content);
 		
-		switch (fs.AppendFile(content, currentDir + commandArr[1]))
+		switch (fs.AppendFile(content, ProcessPath(currentDir, commandArr[1])))
 		{
 		case 1:
 			std::cout << "Wrote to file\n\n";
@@ -424,9 +429,9 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 
 	}
 	else if (nrOfCommands == 3) {
-		std::string data = fs.readFile(currentDir + commandArr[1]);
+		std::string data = fs.readFile(ProcessPath(currentDir, commandArr[1]));
 
-		switch (fs.AppendFile(data, currentDir + commandArr[2]))
+		switch (fs.AppendFile(data, ProcessPath(currentDir, commandArr[2])))
 		{
 		case 1:
 			std::cout << "Wrote to file\n\n";
@@ -450,4 +455,75 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 	else {
 		std::cout << "Wrong Syntax! Insert Path to Create file\n\n";
 	}
+}
+
+void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+	
+	FileInfo fi = fs.Exist(ProcessPath(currentDir, commandArr[1]));
+
+	if (fi.exist && fi.flag == FLAG_DIRECTORY) {
+		currentDir += commandArr[1];
+		currentDir = TrimPath(currentDir) + "/";
+	}
+	else
+	{
+		std::cout << "Path entered is not a directory\n\n";
+	}
+}
+
+
+std::string ProcessPath(std::string cd, std::string extraPath) {
+
+	while (extraPath[extraPath.size()-1] == '/')
+	{
+		extraPath.pop_back();
+	}
+
+	std::string start = extraPath.substr(0,2);
+	if (start == "/.") {
+		return extraPath;
+	}
+	else {
+		return cd + extraPath;
+	}
+	
+}
+
+std::string TrimPath(std::string path) {
+	// Replace spaces with underlines and slashes with spaces
+	// to utilize stringstream easily
+	std::replace(path.begin(), path.end(), ' ', '_');
+	std::replace(path.begin(), path.end(), '/', ' ');
+	
+	//===============================================================================
+	// Create an array of the path's folder names
+	std::vector<std::string> folders;
+	std::vector<std::string> folders2;
+	std::string name;
+	std::stringstream ss(path);
+	while (ss >> name)
+	{
+		folders.push_back(name);
+	}
+	for (int i = 0; i < folders.size(); i++)
+	{
+		if (folders.at(i) == "..") {
+			folders2.pop_back();
+		}
+		else if (folders.at(i) != ".") {
+			folders2.push_back(folders.at(i));
+		}
+	}
+
+	std::string output;
+	output += "/";
+
+	for (int i = 0; i < folders2.size(); i++)
+	{
+		output += folders2.at(i) + "/";
+	}
+
+	output.pop_back();
+
+	return output;
 }
