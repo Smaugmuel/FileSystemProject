@@ -450,7 +450,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 	}
 
 	// File didn't exist
-	return -4;
+	return -2;
 }
 
 std::string FileSystem::readFile(std::string path, int startBlock)
@@ -506,15 +506,18 @@ bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 			content.append(blockContent);
 		}
 
-		switch (mMemblockDevice.writeBlock(blockId, b.toString()))
+		switch (WriteFile(content, newFilePath))
 		{
 		case 1:
+			// Copied successfully
 			return true;
 			break;
 		case -1:
+			// No more space for entire file
 			return false;
 			break;
 		case -2:
+			// File didn't exist
 			return false;
 			break;
 		default:
@@ -523,6 +526,7 @@ bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 		}
 	}
 
+	// Old file didn't exist or wasn't a flag
 	return false;
 }
 
