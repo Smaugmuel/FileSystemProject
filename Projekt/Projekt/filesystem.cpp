@@ -410,6 +410,25 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 	return output;
 }
 
+std:: string FileSystem::GetStringContainingAllBlocks()
+{
+	std::ostringstream oss;
+	std::string currentBlockData;
+
+	for (int i = 0; i < mMemblockDevice.size(); i++)
+	{
+		currentBlockData = mMemblockDevice[i].toString();
+		oss << currentBlockData;
+	}
+
+	return oss.str();
+}
+
+void FileSystem::RestoreImage(int i, char* data)
+{
+	mMemblockDevice[i].writeBlock(data);
+}
+
 int FileSystem::freeSpace()
 {
 	return mMemblockDevice.spaceLeft()*512; //Hardcoded blocksize TODO: FIX

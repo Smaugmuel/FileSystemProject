@@ -53,6 +53,12 @@ public:
     /* This function will get all the files and folders in the specified folder */
     std::string listDir(std::string path, int startBlock = -1);
 
+	/* Gangbang at the old folks home */
+	std::string GetStringContainingAllBlocks();
+
+	// this is currently only for one block at a time.
+	void RestoreImage(int i, char* data);
+
     /* Add your own member-functions if needed */
 	int freeSpace();
 };

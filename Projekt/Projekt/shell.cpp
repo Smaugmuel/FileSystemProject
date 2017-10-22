@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include "filesystem.h"
 
 const int MAXCOMMANDS = 8;
@@ -15,6 +16,8 @@ int parseCommandString(const std::string &userCommand, std::string strArr[]);
 int findCommand(std::string &command);
 bool quit();
 std::string help();
+void CreateImage(FileSystem* fs, std::string name);
+void ReadImage(FileSystem* fs, std::string name);
 
 /* More functions ... */
 
@@ -31,6 +34,7 @@ int main(void) {
 
 	FileSystem fs;
 	//fs.createFolder("/hello world");
+	CreateImage(&fs, "test15");
 	
 
 	//File Test
@@ -107,6 +111,8 @@ int main(void) {
 	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen3.txt", FLAG_FILE);
 	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen4.txt", FLAG_FILE);
 
+	
+
 	result = fs.Create("/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
@@ -151,6 +157,8 @@ int main(void) {
 	//================================
 	std::cout << std::endl << fs.listDir("./") << std::endl;
 
+
+	ReadImage(&fs, "test15");
 	//==============================================================================
 
 
@@ -197,6 +205,7 @@ int main(void) {
 				}
                 break;
             case 5: // createImage
+				CreateImage(&fs,"jannegillarbaern");
                 break;
             case 6: // restoreImage
                 break;
@@ -238,6 +247,7 @@ int parseCommandString(const std::string &userCommand, std::string strArr[]) {
     }
     return counter;
 }
+
 int findCommand(std::string &command) {
     int index = -1;
     for (int i = 0; i < NUMAVAILABLECOMMANDS && index == -1; ++i) {
@@ -273,6 +283,31 @@ std::string help() {
     helpStr += "* pwd:                              Get current working directory\n";
     helpStr += "* help:                             Prints this help screen\n";
     return helpStr;
+}
+
+void CreateImage(FileSystem* fs, std::string name) {
+
+	std::ofstream txtfile(name);
+	
+	txtfile << fs->GetStringContainingAllBlocks();
+
+	txtfile.close();
+
+}
+
+void ReadImage(FileSystem* fs, std::string name) {
+	std::ifstream File(name);
+	char blockData[512];
+	int j = 0;
+
+	while (!File.eof() && j < 250)
+	{
+		File.read(blockData,sizeof(blockData));
+		fs->RestoreImage(j,blockData);
+		j++;
+	}
+
+	File.close();
 }
 
 /* Insert code for your shell functions and call them from the switch-case */
