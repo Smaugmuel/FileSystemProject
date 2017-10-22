@@ -567,7 +567,7 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 	return output;
 }
 
-bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
+int FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 {
 	FileInfo fi = Exist(oldFilePath, mRootStart);
 
@@ -583,14 +583,17 @@ bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 		}
 	
 		std::string blockContent = readFile(oldFilePath);
-		return (WriteFile(blockContent, newFilePath) == 1);
+
+		// Since oldFilePath exists, this will never return -2
+		// The option is still there in shell.cpp, just in case
+		return WriteFile(blockContent, newFilePath);
 	}
 
 	// Old file didn't exist or wasn't a flag
-	return false;
+	return -3;
 }
 
-bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int startBlock)
+int FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int startBlock)
 {
 	if (startBlock == -1) {
 		startBlock == mRootStart;
@@ -613,7 +616,7 @@ bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int 
 		char a;
 		while ((a = content[row*rowSize]) != 0 && row < maxRows)
 		{
-			std::string nameAtRow = content.substr(row*rowSize + NodeElementInfo, NodeElementNameSize);//file/Foldername found in block
+			std::string nameAtRow = content.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
 			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
@@ -633,13 +636,16 @@ bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int 
 
 		mMemblockDevice.writeBlock(parentBlock, content);//rewrite parrent folder block
 
+		//===============================================================================================
+		// The row for the file is now removed from original path folder
 
 
-		std::string fileName(rowString.begin() + (32 - NodeElementInfo), rowString.begin() + 32);
-		
-		// Store only the path until the file
-		std::string pathUntilFile = newFilePath;
-		pathUntilFile.erase(pathUntilFile.begin() + pathUntilFile.find_last_of('/'), pathUntilFile.end());
+
+		// Store only the path until the file name
+		std::string pathUntilFile(newFilePath.begin(), newFilePath.begin() + newFilePath.find_last_of('/'));
+
+		// Store only the file name after the path ( +1 removes the '/' )
+		std::string filename(newFilePath.begin() + (newFilePath.find_last_of('/') + 1), newFilePath.end());
 
 		// Check whether path to directory exists
 		FileInfo fi_2 = Exist(pathUntilFile);
@@ -661,16 +667,26 @@ bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int 
 				row2++;
 			}
 
+			// Replaces file name, and shortens it if new file name is shorter than old file name
+			rowString.replace(rowString.begin() + INDEX_NodeFileName, rowString.end(), filename);
+
+			// Adds '\0' until string is 32 characters
+			rowString.append(32 - INDEX_NodeFileName - filename.size(), '\0');
+
+			
+
 			//Replace the "file to be removed"'s row in parrent to the last row in parrent
 			content2.replace(content2.begin() + (row2*rowSize), content2.begin() + (row2*rowSize + rowSize), rowString);
 
-			mMemblockDevice.writeBlock(block2, content2);
-
-			return true;
+			return mMemblockDevice.writeBlock(block2, content2);
 		}
-		return false;
+
+		// A directory with the chosen name didn't exist
+		return -3;
 	}
-	return false;
+
+	// A file with the old path name didn't exist
+	return -4;
 }
 
 std::string FileSystem::listDir(std::string path, int startBlock)

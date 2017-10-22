@@ -5,11 +5,12 @@
 #include <map>
 
 const int MAXCOMMANDS = 8;
-const int NUMAVAILABLECOMMANDS = 16;
+const int NUMAVAILABLECOMMANDS = 17;
 
 std::string availableCommands[NUMAVAILABLECOMMANDS] = {
     "quit","format","ls","create","cat","createImage","restoreImage",
     "rm","cp","append","mv","mkdir","cd","pwd","help", "spaceleft",
+	"cu"
 };
 
 /* Takes usercommand from input and returns number of commands, commands are stored in strArr[] */
@@ -32,14 +33,16 @@ void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comm
 void FormatDisk(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 
+void ChangeUser(unsigned int nrOfCommands, std::string commandArr[], std::map<std::string, int>& users, std::string& currentUser, int& currentUserID);
+
 std::string TrimPath(std::string path);
 std::string ProcessPath(std::string cd, std::string extraPath);
 
-int main(void) {
-
+int main(void)
+{
 	std::string userCommand, commandArr[MAXCOMMANDS];
 	std::map<std::string, int> users;
-	std::string user = "";    // Change this if you want another user to be displayed
+	std::string currentUser = "";    // Change this if you want another user to be displayed
 	int UserID;
 
 	std::string currentDir = "/";    // current directory, used for output
@@ -47,7 +50,7 @@ int main(void) {
 
     bool bRun = true;
 
-	FileSystem fs;	
+	FileSystem fs;
 
 	//Init Users
 	//===========================
@@ -188,7 +191,7 @@ int main(void) {
 	// ls stuff   <=>   ls stuff stuff2
 
     do {
-        std::cout << user << ":" << currentDir << "$ ";
+        std::cout << currentUser << ":" << currentDir << "$ ";
         getline(std::cin, userCommand);
 
         int nrOfCommands = parseCommandString(userCommand, commandArr);
@@ -242,6 +245,9 @@ int main(void) {
                 break;
 			case 15: // spaceleft
 				SpaceLeft(nrOfCommands, fs, commandArr, currentDir);
+				break;
+			case 16: // cu
+				ChangeUser(nrOfCommands, commandArr, users, currentUser, UserID);
 				break;
 
             default:
@@ -363,13 +369,22 @@ void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 {
 	if (nrOfCommands > 2)
 	{
-		if (fs.CopyFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
+		switch (fs.CopyFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
+		case 1:
 			std::cout << "Created file " << commandArr[2] << " as a copy of " << commandArr[1] << "\n\n";
-		}
-		else
-		{
-			std::cout << "Failed to copy file " << commandArr[1] << "\n\n";
+			break;
+		case -1:
+			std::cout << "Could not reserve block for file " << commandArr[2] << "\n\n";
+			break;
+		case -2:
+			std::cout << "File " << commandArr[1] << " does not exist\n\n";
+			break;
+		case -3:
+			std::cout << commandArr[1] << " does not exist or isn't a file\n\n";
+			break;
+		default:
+			break;
 		}
 	}
 	else
@@ -406,17 +421,31 @@ void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 {
 	if (nrOfCommands > 2)
 	{
-		if (fs.MoveFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
+		switch (fs.MoveFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
-			std::cout << "Moved file " << commandArr[1] << "\n\n";
+		case 1:
+			std::cout << "Successfully moved file " << commandArr[1] << "\n\n";
+			break;
+		case -1:
+			std::cout << "Block number out of range\n\n";
+			break;
+		case -2:
+			std::cout << "Varying block dimensions\n\n";
+			break;
+		case -3:
+			std::cout << "Could not find the chosen directory\n\n";
+			break;
+		case -4:
+			std::cout << "File " << commandArr[1] << " was not found\n\n";
+			break;
+		default:
+			break;
 		}
-		else
-		{
-			std::cout << "Fel\n\n";
-		}
-		std::cout << "Fel\n\n";
 	}
-	std::cout << "Fel\n\n";
+	else
+	{
+		std::cout << "Wrong syntax! Type help for correct syntax\n\n";
+	}
 }
 
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
@@ -433,7 +462,7 @@ void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 		}
 	}
 	else {
-		std::cout << "Wrong sntax! type help for help" << std::endl;
+		std::cout << "Wrong syntax! Type help for help" << std::endl;
 	}
 }
 
@@ -544,6 +573,27 @@ void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr
 	std::cout << "Space Left On Disk: "<< fs.freeSpace() << " Bytes (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
 }
 
+void ChangeUser(unsigned int nrOfCommands, std::string commandArr[], std::map<std::string, int>& users, std::string& currentUser, int& currentUserID)
+{
+	if (nrOfCommands > 1)
+	{
+		if (users.find(commandArr[1]) != users.end())
+		{
+			currentUser = commandArr[1];
+			currentUserID = users[currentUser];
+
+			std::cout << "Changed user to " << currentUser << "\n\n";
+		}
+		else
+		{
+			std::cout << "User " << commandArr[1] << " not found\n\n";
+		}
+	}
+	else
+	{
+		std::cout << "Wrong syntax! Type help for correct syntax\n\n";
+	}
+}
 
 std::string ProcessPath(std::string cd, std::string extraPath) {
 
