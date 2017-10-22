@@ -34,7 +34,7 @@ int main(void) {
 
 	FileSystem fs;
 	//fs.createFolder("/hello world");
-	CreateImage(&fs, "test15");
+	
 	
 
 	//File Test
@@ -111,7 +111,7 @@ int main(void) {
 	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen3.txt", FLAG_FILE);
 	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen4.txt", FLAG_FILE);
 
-	
+	CreateImage(&fs, "test15");
 
 	result = fs.Create("/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
 	if (result == -1) {
@@ -205,9 +205,21 @@ int main(void) {
 				}
                 break;
             case 5: // createImage
-				CreateImage(&fs,"jannegillarbaern");
+				if (nrOfCommands > 1) {
+					CreateImage(&fs, commandArr[1]);
+					std::cout << "Restored filesystem to: " << commandArr[1] << std::endl;
+				}
+				else {
+					std::cout << "Wrong Syntax! Give the saved file a name!" << std::endl;
+				}				
                 break;
             case 6: // restoreImage
+				if (nrOfCommands > 1) {
+					ReadImage(&fs, commandArr[1]);
+				}
+				else {
+					std::cout << "Wrong Syntax! Give the restored file a name!" << std::endl;
+				}
                 break;
             case 7: // rm
                 break;
