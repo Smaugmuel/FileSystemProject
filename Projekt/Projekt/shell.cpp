@@ -406,7 +406,7 @@ void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 {
 	if (nrOfCommands > 2)
 	{
-		if (fs.MoveFile(currentDir + commandArr[1], currentDir + commandArr[2]))
+		if (fs.MoveFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
 			std::cout << "Moved file " << commandArr[1] << "\n\n";
 		}
