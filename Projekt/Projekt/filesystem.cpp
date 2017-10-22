@@ -99,7 +99,7 @@ void FileSystem::init()
 	//Add folder "." pointing to itself
 	b[INDEX_NodeFlag] = FLAG_DIRECTORY;
 	b[INDEX_NodeBlockIndex] = (unsigned char)(((unsigned int)(mRootStart) >> 8) & 0xFF);//
-	b[INDEX_NodeBlockIndex+1] = (unsigned char)((unsigned int)(mRootStart) & 0xFF);//
+	b[INDEX_NodeBlockIndex + 1] = (unsigned char)((unsigned int)(mRootStart) & 0xFF);//
 
 	b.replace(b.begin() + (0 * rowSize + INDEX_NodeFileName), b.begin() + (0 * rowSize + INDEX_NodeFileName + 1), ".");
 
@@ -122,9 +122,8 @@ FileSystem::~FileSystem() {
 
 }
 
-int FileSystem::Create(std::string fileName, char flag, int startBlock)
+int FileSystem::Create(int userID, std::string fileName, char flag, int startBlock)
 {
-
 	// Replace spaces with underlines and slashes with spaces
 	// to utilize stringstream easily
 	std::replace(fileName.begin(), fileName.end(), ' ', '_');
@@ -180,7 +179,7 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 			return -1;//Path no allowed, file have the same name as one of the directorys needed in the path.
 		}
 		else {
-			block = Create(folders.at(i), FLAG_DIRECTORY, block); //Folder in path did'nt exist, so we create it on the fly inside current directory.
+			block = Create(userID, folders.at(i), FLAG_DIRECTORY, block); //Folder in path did'nt exist, so we create it on the fly inside current directory.
 			if (block == -1)
 				return -1;
 			b = mMemblockDevice.readBlock(block).toString();//Read Data from next block
@@ -222,11 +221,16 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 		if (blockIndex == -1) //-1 if no free block could be reserved for the file/folder
 			return false;
 
-		data[row*rowSize + INDEX_NodeFlag] = flag;
-		data[row*rowSize + INDEX_NodeBlockIndex] = (unsigned char)((blockIndex >> 8) & 0xFF);
-		data[row*rowSize + INDEX_NodeBlockIndex + 1] = (unsigned char)((blockIndex) & 0xFF);
+		data[row*rowSize + INDEX_NodeFlag] = flag;//Set Flag
+		data[row*rowSize + INDEX_NodeBlockIndex] = (unsigned char)((blockIndex >> 8) & 0xFF);//Set Block Number
+		data[row*rowSize + INDEX_NodeBlockIndex + 1] = (unsigned char)((blockIndex) & 0xFF);//Set Block Number
 
-		data.replace(data.begin() + (row*rowSize + INDEX_NodeFileName), data.begin() + (row*rowSize + INDEX_NodeFileName + name.size()), name);
+		data[row*rowSize + INDEX_NodeOwnerID] = (unsigned char)((userID >> 8) & 0xFF);//Set OWNER ID
+		data[row*rowSize + INDEX_NodeOwnerID + 1] = (unsigned char)((userID) & 0xFF);//Set OWNER ID
+
+		data[row*rowSize + INDEX_NodeAccesRight] = DEFAULT_ACCESS_RIGHTS;//Set files Access Rights to Defult Access Rights
+
+		data.replace(data.begin() + (row*rowSize + INDEX_NodeFileName), data.begin() + (row*rowSize + INDEX_NodeFileName + name.size()), name);//Set File Name
 
 		mMemblockDevice.writeBlock(block, data);
 
@@ -238,7 +242,7 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 			//Add folder "." pointing to itself
 			b[INDEX_NodeFlag] = FLAG_DIRECTORY;
 			b[INDEX_NodeBlockIndex] = (unsigned char)((blockIndex >> 8) & 0xFF);
-			b[INDEX_NodeBlockIndex+1] = (unsigned char)((blockIndex) & 0xFF);
+			b[INDEX_NodeBlockIndex + 1] = (unsigned char)((blockIndex) & 0xFF);
 
 			b.replace(b.begin() + (0 * rowSize + INDEX_NodeFileName), b.begin() + (0 * rowSize + INDEX_NodeFileName + 1), ".");
 
@@ -260,7 +264,7 @@ int FileSystem::Create(std::string fileName, char flag, int startBlock)
 
 }
 
-bool FileSystem::Remove(std::string fileName, int startBlock)
+bool FileSystem::Remove(int userID, std::string fileName, int startBlock)
 {
 	if (startBlock == -1) {
 		startBlock == mRootStart;
@@ -287,6 +291,24 @@ bool FileSystem::Remove(std::string fileName, int startBlock)
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
 			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+
+				/*Check if User Have Write Access Rights*/
+				char accessGranted = 0;
+
+				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
+				unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
+
+				if (fileOwner == (unsigned int)fileOwner) {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_WRITE % 8)) & 1;//Gets the current status of desired block.
+				}
+				else {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_ALL_WRITE % 8)) & 1;//Gets the current status of desired block.
+				}
+
+				if (accessGranted == 0)
+					return false;
+				/****************************************/
+
 				rowToRemove = row;
 			}
 
@@ -318,7 +340,7 @@ bool FileSystem::Remove(std::string fileName, int startBlock)
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
 			//Recursively remove all files in folder but is ineffective, will result in alot of read/write duplicates but should do the job.
-			if (!Remove(nameAtRow, fi.blockIndex))
+			if (!Remove(userID, nameAtRow, fi.blockIndex))
 				result = false;
 
 			row++;
@@ -367,12 +389,16 @@ bool FileSystem::Remove(std::string fileName, int startBlock)
 	return true;
 }
 
-int FileSystem::WriteFile(std::string data, std::string path, unsigned int offset, int startBlock)
+int FileSystem::WriteFile(int userID, std::string data, std::string path, unsigned int offset, int startBlock)
 {
 	if (startBlock == -1)
 		startBlock = mRootStart;
 
 	FileInfo fi = Exist(path, startBlock);
+
+	std::string b;
+
+	//b = parrentDataBlock, set when access rightes is checked.
 
 	std::vector<std::string> blockData;
 
@@ -390,6 +416,45 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 	if (fi.exist /*&& fi.flag == FLAG_FILE*/)
 	{
+		b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+
+		const int maxRows = BLOCKSIZE / rowSize;
+		int row = 0;
+		bool found = false;
+		char a;
+
+		while ((a = b[row*rowSize + INDEX_NodeFlag]) != 0 && row < maxRows && !found)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			//nameAtRow.size();
+
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+
+													  /*Check if User Have Write Access Rights*/
+				char accessGranted = 0;
+
+				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
+				unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
+
+				if (fileOwner == (unsigned int)fileOwner) {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_WRITE % 8)) & 1;//Gets the current status of desired block.
+				}
+				else {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_ALL_WRITE % 8)) & 1;//Gets the current status of desired block.
+				}
+
+				if (accessGranted == 0)
+					return -5;
+				/****************************************/
+
+				found = true;
+			}
+
+			row++;
+		}
+
 		std::string content;
 		unsigned int nextBlock = 0;
 		unsigned int currentBlock = fi.blockIndex;
@@ -414,7 +479,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 				content[INDEX_FILEBLOCK_nextBlockInfo] = FLAG_DIRECTORY;//A Flag set if the block continues to another block
 				content[BLOCKSIZE - 2] = (unsigned char)((nextBlock >> 8) & 0xFF);//ID to next block
-				content[BLOCKSIZE - 2] = (unsigned char)((nextBlock)& 0xFF);//ID to next block
+				content[BLOCKSIZE - 2] = (unsigned char)((nextBlock) & 0xFF);//ID to next block
 				mMemblockDevice.writeBlock(currentBlock, content);
 			}
 		}
@@ -448,7 +513,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 
 					content[INDEX_FILEBLOCK_nextBlockInfo] = FLAG_DIRECTORY;//A Flag set if the block continues to another block
 					content[BLOCKSIZE - 2] = (unsigned char)((nextBlock >> 8) & 0xFF);//ID to next block
-					content[BLOCKSIZE - 1] = (unsigned char)((nextBlock)& 0xFF);//ID to next block
+					content[BLOCKSIZE - 1] = (unsigned char)((nextBlock) & 0xFF);//ID to next block
 				}
 			}
 
@@ -458,37 +523,16 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 		}
 
 		/*=====================================================*/
-		const int maxRows = BLOCKSIZE / rowSize;
 
-		std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+		int lastsize = (unsigned char)(b[(row - 1)*rowSize + INDEX_NodeFileSize]) << 24 | (unsigned char)(b[(row - 1)*rowSize + INDEX_NodeFileSize + 1]) << 16 | (unsigned char)(b[(row - 1)*rowSize + INDEX_NodeFileSize + 2]) << 8 | (unsigned char)(b[(row - 1)*rowSize + INDEX_NodeFileSize + 3]);
 
-		int row = 0;
-		bool found = false;
-		char a;
-		while ((a = b[row*rowSize + INDEX_NodeFlag]) != 0 && row < maxRows && !found)
-		{
-			std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
-			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+		if (lastsize < size) {//If Last Size is less then size of all written data + offset, Update fileSize
+			b[(row-1)*rowSize + INDEX_NodeFileSize] = (unsigned char)(((unsigned int)size) >> 24 & 0xFF);
+			b[(row - 1)*rowSize + INDEX_NodeFileSize + 1] = (unsigned char)(((unsigned int)size) >> 16 & 0xFF);
+			b[(row - 1)*rowSize + INDEX_NodeFileSize + 2] = (unsigned char)(((unsigned int)size) >> 8 & 0xFF);
+			b[(row - 1)*rowSize + INDEX_NodeFileSize + 3] = (unsigned char)(((unsigned int)size) & 0xFF);
 
-			//nameAtRow.size();
-
-			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
-
-				int lastsize = (unsigned char)(b[row*rowSize + INDEX_NodeFileSize]) << 24 | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 1]) << 16 | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 2]) << 8 | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 3]);
-
-				if (lastsize < size) {//If Last Size is less then size of all written data + offset, Update fileSize
-					b[row*rowSize + INDEX_NodeFileSize] = (unsigned char)(((unsigned int)size) >> 24 & 0xFF);
-					b[row*rowSize + INDEX_NodeFileSize + 1] = (unsigned char)(((unsigned int)size) >> 16 & 0xFF);
-					b[row*rowSize + INDEX_NodeFileSize + 2] = (unsigned char)(((unsigned int)size) >> 8 & 0xFF);
-					b[row*rowSize + INDEX_NodeFileSize + 3] = (unsigned char)(((unsigned int)size) & 0xFF);
-
-					mMemblockDevice.writeBlock(fi.parrentBlockIndex, b);
-				}
-
-				found = true;
-			}
-
-			row++;
+			mMemblockDevice.writeBlock(fi.parrentBlockIndex, b);
 		}
 
 		// Succes
@@ -499,7 +543,7 @@ int FileSystem::WriteFile(std::string data, std::string path, unsigned int offse
 	return -2;
 }
 
-int FileSystem::AppendFile(std::string data, std::string path, int startBlock)
+int FileSystem::AppendFile(int userID, std::string data, std::string path, int startBlock)
 {
 	FileInfo fi = Exist(path, startBlock);
 
@@ -522,7 +566,7 @@ int FileSystem::AppendFile(std::string data, std::string path, int startBlock)
 			unsigned int fileSize = (unsigned char)(b[row*rowSize + INDEX_NodeFileSize]) >> 24 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 1]) >> 16 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 2]) >> 8 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 3]) & 0xFF;
 
 			//Write to file with fileSize as offset
-			return WriteFile(data,path, fileSize,fi.parrentBlockIndex);
+			return WriteFile(userID, data, path, fileSize, fi.parrentBlockIndex);
 
 			found = true;
 		}
@@ -533,7 +577,7 @@ int FileSystem::AppendFile(std::string data, std::string path, int startBlock)
 	return 0;
 }
 
-std::string FileSystem::readFile(std::string path, int startBlock)
+std::string FileSystem::readFile(int userID, std::string path, int startBlock)
 {
 	if (startBlock == -1)
 		startBlock = mRootStart;
@@ -544,6 +588,45 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 	std::string blockData;
 	if (fi.exist /*&& fi.flag == FLAG_FILE*/) {
 
+		std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+		int blockSize = b.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+		int row = 0;
+		bool found = false;
+		char a;
+
+		while ((a = b[row*rowSize + INDEX_NodeFlag]) != 0 && row < maxRows && !found)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			//nameAtRow.size();
+
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+
+				/*Check if User Have Write Access Rights*/
+				char accessGranted = 0;
+
+				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
+				unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
+
+				if (fileOwner == (unsigned int)fileOwner) {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_READ % 8)) & 1;//Gets the current status of desired block.
+				}
+				else {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_ALL_READ % 8)) & 1;//Gets the current status of desired block.
+				}
+
+				if (accessGranted == 0)
+					return "";
+				/****************************************/
+
+				found = true;
+			}
+
+			row++;
+		}
+
 		bool read = true;
 		unsigned int block = fi.blockIndex;
 
@@ -551,7 +634,7 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 		{
 			blockData = mMemblockDevice.readBlock(block).toString();
 
-			output += blockData.substr(0, std::min(INDEX_FILEBLOCK_nextBlockInfo, (int)blockData.find_last_not_of('\0')+1));
+			output += blockData.substr(0, std::min(INDEX_FILEBLOCK_nextBlockInfo, (int)blockData.find_last_not_of('\0') + 1));
 
 			if (blockData[INDEX_FILEBLOCK_nextBlockInfo] != '\0') {//If file extends to another block, start reading from that block
 				block = (unsigned char)(blockData[BLOCKSIZE - 2]) << 8 | (unsigned char)(blockData[BLOCKSIZE - 1]);
@@ -567,30 +650,30 @@ std::string FileSystem::readFile(std::string path, int startBlock)
 	return output;
 }
 
-bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
+bool FileSystem::CopyFile(int userID, std::string oldFilePath, std::string newFilePath)
 {
 	FileInfo fi = Exist(oldFilePath, mRootStart);
 
 	if (fi.exist && fi.flag == FLAG_FILE)
 	{
 		// Create the new file
-		int blockId = Create(newFilePath, FLAG_FILE);
+		int blockId = Create(userID, newFilePath, FLAG_FILE);
 
 		if (blockId == -1)
 		{
 			// Failed to create file
 			return false;
 		}
-	
-		std::string blockContent = readFile(oldFilePath);
-		return (WriteFile(blockContent, newFilePath) == 1);
+
+		std::string blockContent = readFile(userID, oldFilePath);
+		return (WriteFile(userID, blockContent, newFilePath) == 1);
 	}
 
 	// Old file didn't exist or wasn't a flag
 	return false;
 }
 
-bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int startBlock)
+bool FileSystem::MoveFile(int userID, std::string oldFilePath, std::string newFilePath, int startBlock)
 {
 	if (startBlock == -1) {
 		startBlock == mRootStart;
@@ -613,10 +696,28 @@ bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int 
 		char a;
 		while ((a = content[row*rowSize]) != 0 && row < maxRows)
 		{
-			std::string nameAtRow = content.substr(row*rowSize + NodeElementInfo, NodeElementNameSize);//file/Foldername found in block
+			std::string nameAtRow = content.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
 			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+
+													  /*Check if User Have Write Access Rights*/
+				char accessGranted = 0;
+
+				unsigned int fileOwner = (unsigned char)content[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)content[row*rowSize + INDEX_NodeOwnerID + 1];
+				unsigned char accessRights = content[row*rowSize + INDEX_NodeAccesRight];
+
+				if (fileOwner == (unsigned int)fileOwner) {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_WRITE % 8)) & 1;//Gets the current status of desired block.
+				}
+				else {
+					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_ALL_WRITE % 8)) & 1;//Gets the current status of desired block.
+				}
+
+				if (accessGranted == 0)
+					return false;
+				/****************************************/
+
 				rowToRemove = row;
 			}
 
@@ -635,8 +736,8 @@ bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int 
 
 
 
-		std::string fileName(rowString.begin() + (32 - NodeElementInfo), rowString.begin() + 32);
-		
+		std::string fileName(rowString.begin() + (32 - INDEX_NodeFileName), rowString.begin() + 32);
+
 		// Store only the path until the file
 		std::string pathUntilFile = newFilePath;
 		pathUntilFile.erase(pathUntilFile.begin() + pathUntilFile.find_last_of('/'), pathUntilFile.end());
@@ -727,6 +828,44 @@ void FileSystem::FormatDisk()
 {
 	mMemblockDevice.reset();
 	init();
+}
+
+void FileSystem::Cmod(int UserID, std::string path, char c, int user)
+{
+	FileInfo fi = Exist(path);
+
+	if (fi.exist) {
+		std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+
+		int blockSize = b.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+
+		int row = 0;
+
+
+		bool found = false;
+		char a;
+		while ((a = b[row*rowSize + INDEX_NodeFlag]) != 0 && row < maxRows && !found)
+		{
+
+			std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
+
+				if (fileOwner == (unsigned int)fileOwner) {
+					b[row*rowSize + INDEX_NodeAccesRight] = c;//Set files Access Rights to Defult Access Rights
+					mMemblockDevice.writeBlock(fi.parrentBlockIndex, b);
+
+					found = true;
+				}
+			}
+
+			row++;
+		}
+	}
+
 }
 
 int FileSystem::freeSpace()

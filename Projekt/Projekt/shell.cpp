@@ -5,11 +5,11 @@
 #include <map>
 
 const int MAXCOMMANDS = 8;
-const int NUMAVAILABLECOMMANDS = 16;
+const int NUMAVAILABLECOMMANDS = 17;
 
 std::string availableCommands[NUMAVAILABLECOMMANDS] = {
     "quit","format","ls","create","cat","createImage","restoreImage",
-    "rm","cp","append","mv","mkdir","cd","pwd","help", "spaceleft",
+    "rm","cp","append","mv","mkdir","cd","pwd","help", "spaceleft", "chmod",
 };
 
 /* Takes usercommand from input and returns number of commands, commands are stored in strArr[] */
@@ -19,18 +19,19 @@ bool quit();
 std::string help();
 
 /* More functions ... */
-void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
+void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
+void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
 void PrintWorkingDirectory(const std::string& directory);
-void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
-void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
+void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
+void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
 void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void FormatDisk(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
+void Chmod(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
 
 std::string TrimPath(std::string path);
 std::string ProcessPath(std::string cd, std::string extraPath);
@@ -40,7 +41,7 @@ int main(void) {
 	std::string userCommand, commandArr[MAXCOMMANDS];
 	std::map<std::string, int> users;
 	std::string user = "";    // Change this if you want another user to be displayed
-	int UserID;
+	int UserID = 0;
 
 	std::string currentDir = "/";    // current directory, used for output
 	int currentDirectoryBlock;
@@ -65,28 +66,28 @@ int main(void) {
 	
 	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
-	result = fs.Create("/stuff.txt",FLAG_FILE);
+	result = fs.Create(UserID,"/stuff.txt",FLAG_FILE);
 	if (result == -1) {
 		std::cout << "Failed To Create File(1)" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/shit", FLAG_DIRECTORY);
+	result = fs.Create(UserID,"/shit", FLAG_DIRECTORY);
 	if (result == -1) {
 		std::cout << "Failed To Create File(2)" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/th.a", FLAG_FILE);
+	result = fs.Create(UserID,"/th.a", FLAG_FILE);
 	if (result == -1) {
 		std::cout << "Failed To Create File(3)" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/shit/stuff.txt", FLAG_FILE);
+	result = fs.Create(UserID,"/shit/stuff.txt", FLAG_FILE);
 	if (result == -1) {
 		std::cout << "Failed To Create File(4)" << std::endl;
 	}
@@ -94,28 +95,28 @@ int main(void) {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
 
-	result = fs.Create("/shit2/Hej/Test/stuff.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	result = fs.Create(UserID,"/shit2/Hej/Test/stuff.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File(5)" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/shit2/Hej/Test/Bajs.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	result = fs.Create(UserID,"/shit2/Hej/Test/Bajs.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/shit2/Hej/Test/stuff2.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	result = fs.Create(UserID,"/shit2/Hej/Test/stuff2.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/shit2/Hej/Test/Kissen.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
+	result = fs.Create(UserID,"/shit2/Hej/Test/Kissen.txt", FLAG_FILE); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
 	}
@@ -124,23 +125,23 @@ int main(void) {
 	}
 
 	//Will Try To Remove shit2 folder later with all files in it
-	fs.Create("/shit2/Hej/Test/Kissen2.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/Kissen3.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/Kissen4.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/Kissen5.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen1.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen2.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen3.txt", FLAG_FILE);
-	fs.Create("/shit2/Hej/Test/MerMappDjup/Kissen4.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/Kissen2.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/Kissen3.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/Kissen4.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/Kissen5.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/MerMappDjup/Kissen1.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/MerMappDjup/Kissen2.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/MerMappDjup/Kissen3.txt", FLAG_FILE);
+	fs.Create(UserID,"/shit2/Hej/Test/MerMappDjup/Kissen4.txt", FLAG_FILE);
 
-	result = fs.Create("/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
+	result = fs.Create(UserID,"/shit2/Hej/Test/Mapp1", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
 	}
 	else {
 		std::cout << "File created at Block: " << result << std::endl;
 	}
-	result = fs.Create("/shit2/Hej/Test/Mapp2", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
+	result = fs.Create(UserID,"/shit2/Hej/Test/Mapp2", FLAG_DIRECTORY); //Many Directorys Created At The Same Time!
 	if (result == -1) {
 		std::cout << "Failed To Create File" << std::endl;
 	}
@@ -153,7 +154,7 @@ int main(void) {
 
 	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace()/BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
-	bool res = fs.Remove("/stuff.txt");//Remove File (Stuff.txt)
+	bool res = fs.Remove(UserID,"/stuff.txt");//Remove File (Stuff.txt)
 	if (!res) {
 		std::cout << "Failed To Remove File(1)" << std::endl;
 	}
@@ -163,7 +164,7 @@ int main(void) {
 
 	std::cout << fs.freeSpace() << " Bytes Free (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl;
 
-	res = fs.Remove("/shit2");//Remove Folder With many sub fils & folders
+	res = fs.Remove(UserID, "/shit2");//Remove Folder With many sub fils & folders
 	if (!res) {
 		std::cout << "Failed To Remove File(1)" << std::endl;
 	}
@@ -207,29 +208,29 @@ int main(void) {
 				ListDirectory(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 3: // create
-				CreateFile(nrOfCommands, fs, commandArr, currentDir);
+				CreateFile(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 4: // cat
-				Catenate(nrOfCommands, fs, commandArr, currentDir);
+				Catenate(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 5: // createImage
                 break;
             case 6: // restoreImage
                 break;
             case 7: // rm
-				RemoveFile(nrOfCommands, fs, commandArr, currentDir);
+				RemoveFile(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 8: // cp
-				CopyFile(nrOfCommands, fs, commandArr, currentDir);
+				CopyFile(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 9: // append
-				AppendFile(nrOfCommands,fs,commandArr,currentDir);
+				AppendFile(nrOfCommands,fs,commandArr,currentDir, UserID);
                 break;
             case 10: // mv
-				MoveFile(nrOfCommands, fs, commandArr, currentDir);
+				MoveFile(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 11: // mkdir
-				MakeDirectory(nrOfCommands, fs, commandArr, currentDir);
+				MakeDirectory(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 12: // cd
 				ChangeDirectory(nrOfCommands, fs, commandArr, currentDir);
@@ -243,7 +244,9 @@ int main(void) {
 			case 15: // spaceleft
 				SpaceLeft(nrOfCommands, fs, commandArr, currentDir);
 				break;
-
+			case 16: // spaceleft
+				Chmod(nrOfCommands, fs, commandArr, currentDir, UserID);
+				break;
             default:
                 std::cout << "Unknown command: " << commandArr[0] << std::endl;
             }
@@ -304,16 +307,16 @@ std::string help() {
 
 /* Insert code for your shell functions and call them from the switch-case */
 
-void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
 {
 	if (nrOfCommands > 1) {
-		if (fs.Create(ProcessPath(currentDir, commandArr[1]), FLAG_FILE) != -1) {
+		if (fs.Create(UserID, ProcessPath(currentDir, commandArr[1]), FLAG_FILE) != -1) {
 			std::cout << "Created File: " << commandArr[1] << "\nInsert content: ";
 
 			std::string content;
 			getline(std::cin, content);
 
-			switch (fs.WriteFile(content, ProcessPath(currentDir, commandArr[1])))
+			switch (fs.WriteFile(UserID, content, ProcessPath(currentDir, commandArr[1])))
 			{
 			case 1:
 				std::cout << "Wrote to file\n\n";
@@ -343,10 +346,10 @@ void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 	}
 }
 
-void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
 {
 	if (nrOfCommands > 1) {
-		std::cout << fs.readFile(ProcessPath(currentDir, commandArr[1])) << "\n\n";
+		std::cout << fs.readFile(UserID, ProcessPath(currentDir, commandArr[1])) << "\n\n";
 	}
 	else {
 		std::cout << "Wrong Syntax! Insert Path to Read from\n\n";
@@ -359,11 +362,11 @@ void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comman
 	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? ProcessPath(currentDir, commandArr[1]) : ".")) << "\n";
 }
 
-void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
 {
 	if (nrOfCommands > 2)
 	{
-		if (fs.CopyFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
+		if (fs.CopyFile(UserID, ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
 			std::cout << "Created file " << commandArr[2] << " as a copy of " << commandArr[1] << "\n\n";
 		}
@@ -378,11 +381,11 @@ void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 	}
 }
 
-void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
 {
 	if (nrOfCommands > 1)
 	{
-		if (fs.Create(ProcessPath(currentDir, commandArr[1]), FLAG_DIRECTORY) != -1)
+		if (fs.Create(UserID, ProcessPath(currentDir, commandArr[1]), FLAG_DIRECTORY) != -1)
 		{
 			std::cout << "Created directory " << commandArr[1] << "\n\n";
 		}
@@ -402,11 +405,11 @@ void PrintWorkingDirectory(const std::string& directory)
 	std::cout << directory << "\n";
 }
 
-void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
 {
 	if (nrOfCommands > 2)
 	{
-		if (fs.MoveFile(ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
+		if (fs.MoveFile(UserID, ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
 			std::cout << "Moved file " << commandArr[1] << "\n\n";
 		}
@@ -419,11 +422,11 @@ void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 	std::cout << "Fel\n\n";
 }
 
-void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID) {
 	if (nrOfCommands > 1) {
 		for (int i = 1; i < nrOfCommands; i++)
 		{
-			bool res = fs.Remove(ProcessPath(currentDir, commandArr[1]));//Remove File (Stuff.txt)
+			bool res = fs.Remove(UserID, ProcessPath(currentDir, commandArr[1]));//Remove File (Stuff.txt)
 			if (!res) {
 				std::cout << "Failed To Remove: " << commandArr[i] << std::endl;
 			}
@@ -437,13 +440,13 @@ void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 	}
 }
 
-void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
+void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID) {
 	if (nrOfCommands == 2) {
 		std::string content;
 		std::cout << "Content to appent with: ";
 		getline(std::cin, content);
 		
-		switch (fs.AppendFile(content, ProcessPath(currentDir, commandArr[1])))
+		switch (fs.AppendFile(UserID, content, ProcessPath(currentDir, commandArr[1])))
 		{
 		case 1:
 			std::cout << "Wrote to file\n\n";
@@ -466,28 +469,31 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 
 	}
 	else if (nrOfCommands == 3) {
-		std::string data = fs.readFile(ProcessPath(currentDir, commandArr[1]));
+		std::string data = fs.readFile(UserID, ProcessPath(currentDir, commandArr[1]));
 
-		switch (fs.AppendFile(data, ProcessPath(currentDir, commandArr[2])))
-		{
-		case 1:
-			std::cout << "Wrote to file\n\n";
-			break;
-		case -1:
-			std::cout << "Couldn't write to file: Out of range\n\n";
-			break;
-		case -2:
-			std::cout << "Couldn't write to file: Wrong size\n\n";
-			break;
-		case -3:
-			std::cout << "Couldn't write to file: Content couldn't fit\n\n";
-			break;
-		case -4:
-			std::cout << "Couldn't write to file: File does not exist\n\n";
-			break;
-		default:
-			break;
+		if (data != "") {
+			switch (fs.AppendFile(UserID, data, ProcessPath(currentDir, commandArr[2])))
+			{
+			case 1:
+				std::cout << "Wrote to file\n\n";
+				break;
+			case -1:
+				std::cout << "Couldn't write to file: Out of range\n\n";
+				break;
+			case -2:
+				std::cout << "Couldn't write to file: Wrong size\n\n";
+				break;
+			case -3:
+				std::cout << "Couldn't write to file: Content couldn't fit\n\n";
+				break;
+			case -4:
+				std::cout << "Couldn't write to file: File does not exist\n\n";
+				break;
+			default:
+				break;
+			}
 		}
+
 	}
 	else {
 		std::cout << "Wrong Syntax! Insert Path to Create file\n\n";
@@ -542,6 +548,30 @@ void FormatDisk(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 
 void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
 	std::cout << "Space Left On Disk: "<< fs.freeSpace() << " Bytes (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
+}
+
+void Chmod(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID) {
+	if (nrOfCommands == 3) {
+		if (commandArr[1].size() == 2) {
+
+			char c = 12;
+			if (commandArr[1][0] == 'R' || commandArr[1][0] == 'r') {
+				c += 2;
+			}
+			if (commandArr[1][0] == 'W' || commandArr[1][0] == 'w') {
+				c += 1;
+			}
+			
+			fs.Cmod(UserID, ProcessPath(currentDir, commandArr[2]), c, UserID);
+		}
+		else
+		{
+			std::cout << "Wrong sntax! type help for help" << std::endl;
+		}
+	}
+	else {
+		std::cout << "Wrong sntax! type help for help" << std::endl;
+	}
 }
 
 
