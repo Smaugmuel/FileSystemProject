@@ -75,6 +75,8 @@ public:
 
 	bool CopyFile(std::string oldFilePath, std::string newFilePath);
 
+	bool MoveFile(std::string oldFilePath, std::string newFilePath, int startBlock = -1);
+
     /* This function will get all the files and folders in the specified folder */
     std::string listDir(std::string path, int startBlock = -1);
 
