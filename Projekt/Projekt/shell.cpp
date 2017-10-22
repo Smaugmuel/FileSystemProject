@@ -2,6 +2,7 @@
 #include <sstream>
 #include "filesystem.h"
 #include <algorithm>
+#include <map>
 
 const int MAXCOMMANDS = 8;
 const int NUMAVAILABLECOMMANDS = 16;
@@ -36,14 +37,23 @@ std::string ProcessPath(std::string cd, std::string extraPath);
 int main(void) {
 
 	std::string userCommand, commandArr[MAXCOMMANDS];
-	std::string user = "user@DV1492";    // Change this if you want another user to be displayed
+	std::map<std::string, int> users;
+	std::string user = "";    // Change this if you want another user to be displayed
+	int UserID;
+
 	std::string currentDir = "/";    // current directory, used for output
 	int currentDirectoryBlock;
 
     bool bRun = true;
 
-
 	FileSystem fs;	
+
+	//Init Users
+	//===========================
+	users["User1"] = 1;
+	users["User2"] = 2;
+	users["User3"] = 3;
+	users["User4"] = 4;
 
 	//File Test
 	//==============================================================================
