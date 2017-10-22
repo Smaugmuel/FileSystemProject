@@ -91,8 +91,14 @@ public:
     std::string listDir(std::string path, int startBlock = -1);
 
 	void FormatDisk();
-
 	void Cmod(int UserID, std::string path, char c, int user);
+
+	/* Gangbang at the old folks home */
+	std::string GetStringContainingAllBlocks();
+
+	// this is currently only for one block at a time.
+	void RestoreImage(int i, char* data);
+
     /* Add your own member-functions if needed */
 	int freeSpace();
 };

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include "filesystem.h"
 #include <algorithm>
 #include <map>
@@ -34,6 +35,8 @@ void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr
 void ChangeUser(unsigned int nrOfCommands, std::string commandArr[], std::map<std::string, int>& users, std::string& currentUser, int& currentUserID);
 void Chmod(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID);
 std::string help();
+void CreateImage(FileSystem& fs, std::string name);
+void ReadImage(FileSystem& fs, std::string name);
 
 std::string TrimPath(std::string path);
 std::string ProcessPath(std::string cd, std::string extraPath);
@@ -85,8 +88,21 @@ int main(void)
 				Catenate(nrOfCommands, fs, commandArr, currentDir, UserID);
                 break;
             case 5: // createImage
+				if (nrOfCommands > 1) {
+					CreateImage(&fs, commandArr[1]);
+					std::cout << "Restored filesystem to: " << commandArr[1] << std::endl;
+				}
+				else {
+					std::cout << "Wrong Syntax! Give the saved file a name!" << std::endl;
+				}				
                 break;
             case 6: // restoreImage
+				if (nrOfCommands > 1) {
+					ReadImage(&fs, commandArr[1]);
+				}
+				else {
+					std::cout << "Wrong Syntax! Give the restored file a name!" << std::endl;
+				}
                 break;
             case 7: // rm
 				RemoveFile(nrOfCommands, fs, commandArr, currentDir, UserID);
@@ -142,6 +158,7 @@ int parseCommandString(const std::string &userCommand, std::string strArr[]) {
     }
     return counter;
 }
+
 int findCommand(std::string &command) {
     int index = -1;
     for (int i = 0; i < NUMAVAILABLECOMMANDS && index == -1; ++i) {
@@ -180,6 +197,31 @@ std::string help() {
 	helpStr += "* chmod  <access right> <filename>: Changes access rights of each user except owner of <filename> to <access right> (r- : Read only, rw : Read and write, -w : Write only, -- : No access\n";
     helpStr += "* help:                             Prints this help screen\n";
     return helpStr;
+}
+
+void CreateImage(FileSystem& fs, std::string name) {
+
+	std::ofstream txtfile(name);
+	
+	txtfile << fs.GetStringContainingAllBlocks();
+
+	txtfile.close();
+
+}
+
+void ReadImage(FileSystem* fs, std::string name) {
+	std::ifstream File(name);
+	char blockData[512];
+	int j = 0;
+
+	while (!File.eof() && j < 250)
+	{
+		File.read(blockData,sizeof(blockData));
+		fs.RestoreImage(j,blockData);
+		j++;
+	}
+
+	File.close();
 }
 
 /* Insert code for your shell functions and call them from the switch-case */
