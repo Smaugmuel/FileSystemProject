@@ -23,6 +23,7 @@ void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comman
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void PrintWorkingDirectory(const std::string& directory);
+void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir);
 
@@ -207,6 +208,7 @@ int main(void) {
 				AppendFile(nrOfCommands,fs,commandArr,currentDir);
                 break;
             case 10: // mv
+				MoveFile(nrOfCommands, fs, commandArr, currentDir);
                 break;
             case 11: // mkdir
 				MakeDirectory(nrOfCommands, fs, commandArr, currentDir);
@@ -376,6 +378,23 @@ void MakeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string comman
 void PrintWorkingDirectory(const std::string& directory)
 {
 	std::cout << directory << "\n";
+}
+
+void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
+{
+	if (nrOfCommands > 2)
+	{
+		if (fs.MoveFile(currentDir + commandArr[1], currentDir + commandArr[2]))
+		{
+			std::cout << "Moved file " << commandArr[1] << "\n\n";
+		}
+		else
+		{
+			std::cout << "Fel\n\n";
+		}
+		std::cout << "Fel\n\n";
+	}
+	std::cout << "Fel\n\n";
 }
 
 void RemoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {

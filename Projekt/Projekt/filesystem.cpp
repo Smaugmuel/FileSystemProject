@@ -620,6 +620,89 @@ bool FileSystem::CopyFile(std::string oldFilePath, std::string newFilePath)
 	return false;
 }
 
+bool FileSystem::MoveFile(std::string oldFilePath, std::string newFilePath, int startBlock)
+{
+	if (startBlock == -1) {
+		startBlock == mRootStart;
+	}
+
+	FileInfo fi = Exist(oldFilePath, startBlock);
+
+	if (fi.exist && fi.flag == FLAG_FILE) {
+		int parentBlock = fi.parrentBlockIndex;
+		int block = fi.blockIndex;
+
+		std::string content = mMemblockDevice.readBlock(parentBlock).toString();
+		int blockSize = content.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+
+		int rowToRemove = 2;
+		int row = 2;
+
+		bool found = false;
+		char a;
+		while ((a = content[row*rowSize]) != 0 && row < maxRows)
+		{
+			std::string nameAtRow = content.substr(row*rowSize + NodeElementInfo, NodeElementNameSize);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+				rowToRemove = row;
+			}
+
+			row++;
+		}
+
+		// Copy the row which is to be removed and moved
+		std::string rowString(content.begin() + (rowToRemove*rowSize), content.begin() + (rowToRemove*rowSize + rowSize));
+
+		//Replace the "file to be removed"'s row in parrent to the last row in parrent
+		content.replace(content.begin() + (rowToRemove*rowSize), content.begin() + (rowToRemove*rowSize + rowSize), content.substr((row - 1)*rowSize, rowSize));
+		//Clear last Row in Parrent
+		content.replace(content.begin() + ((row - 1)*rowSize), content.begin() + ((row - 1)*rowSize + rowSize), rowSize, '\0');
+
+		mMemblockDevice.writeBlock(parentBlock, content);//rewrite parrent folder block
+
+
+
+		std::string fileName(rowString.begin() + (32 - NodeElementInfo), rowString.begin() + 32);
+		
+		// Store only the path until the file
+		std::string pathUntilFile = newFilePath;
+		pathUntilFile.erase(pathUntilFile.begin() + pathUntilFile.find_last_of('/'), pathUntilFile.end());
+
+		// Check whether path to directory exists
+		FileInfo fi_2 = Exist(pathUntilFile);
+		if (fi_2.exist && fi_2.flag == FLAG_DIRECTORY)
+		{
+			int block2 = fi_2.blockIndex;
+
+			std::string content2 = mMemblockDevice.readBlock(block2).toString();
+			int blockSize2 = content2.size(); //MaxBytes
+			const int maxRows2 = blockSize2 / rowSize;
+
+			int rowToRemove2 = 2;
+			int row2 = 2;
+
+			bool found2 = false;
+			char a2;
+			while ((a2 = content2[row2*rowSize]) != 0 && row2 < maxRows2)
+			{
+				row2++;
+			}
+
+			//Replace the "file to be removed"'s row in parrent to the last row in parrent
+			content2.replace(content2.begin() + (row2*rowSize), content2.begin() + (row2*rowSize + rowSize), rowString);
+
+			mMemblockDevice.writeBlock(block2, content2);
+
+			return true;
+		}
+		return false;
+	}
+	return false;
+}
+
 std::string FileSystem::listDir(std::string path, int startBlock)
 {
 	//Cannot List Root until "." and ".." Folders Exist
