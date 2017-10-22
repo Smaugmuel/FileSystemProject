@@ -298,7 +298,7 @@ bool FileSystem::Remove(int userID, std::string fileName, int startBlock)
 				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
 				unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
 
-				if (fileOwner == (unsigned int)fileOwner) {
+				if (fileOwner == (unsigned int)userID) {
 					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_WRITE % 8)) & 1;//Gets the current status of desired block.
 				}
 				else {
@@ -438,7 +438,7 @@ int FileSystem::WriteFile(int userID, std::string data, std::string path, unsign
 				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
 				unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
 
-				if (fileOwner == (unsigned int)fileOwner) {
+				if (fileOwner == (unsigned int)userID) {
 					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_WRITE % 8)) & 1;//Gets the current status of desired block.
 				}
 				else {
@@ -610,7 +610,7 @@ std::string FileSystem::readFile(int userID, std::string path, int startBlock)
 				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
 				unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
 
-				if (fileOwner == (unsigned int)fileOwner) {
+				if (fileOwner == (unsigned int)userID) {
 					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_READ % 8)) & 1;//Gets the current status of desired block.
 				}
 				else {
@@ -710,7 +710,7 @@ int FileSystem::MoveFile(int userID, std::string oldFilePath, std::string newFil
 				unsigned int fileOwner = (unsigned char)content[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)content[row*rowSize + INDEX_NodeOwnerID + 1];
 				unsigned char accessRights = content[row*rowSize + INDEX_NodeAccesRight];
 
-				if (fileOwner == (unsigned int)fileOwner) {
+				if (fileOwner == (unsigned int)userID) {
 					accessGranted = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_OWNER_WRITE % 8)) & 1;//Gets the current status of desired block.
 				}
 				else {
@@ -813,6 +813,11 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 		char a;
 		while ((a = b[row*rowSize + INDEX_NodeFlag]) != 0 && row < maxRows)
 		{
+			unsigned char accessRights = b[row*rowSize + INDEX_NodeAccesRight];
+
+			unsigned char read = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_ALL_READ % 8)) & 1;
+			unsigned char write = (accessRights >> (INDEX_BIT_NR_ACCESSRIGHTS_ALL_WRITE % 8)) & 1;
+
 			std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
 			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
@@ -824,6 +829,12 @@ std::string FileSystem::listDir(std::string path, int startBlock)
 			output += ((a == FLAG_FILE) ? "<FILE>\t" : "<DIR>\t");//Print if it is a file or directory
 			output += nameAtRow;//Print Name
 			output += ((a == FLAG_FILE) ? "\t" + std::to_string(size) + " Bytes" : "");//If it is a file, Print File Size
+			
+			if (row > 1) {
+				output += "\t";
+				output += (read == 1 ? "R" : "-");
+				output += (write == 1 ? "W" : "-");
+			}
 			output += "\n";
 
 			row++;
@@ -868,7 +879,7 @@ void FileSystem::Cmod(int UserID, std::string path, char c, int user)
 			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
 				unsigned int fileOwner = (unsigned char)b[row*rowSize + INDEX_NodeOwnerID] << 8 | (unsigned char)b[row*rowSize + INDEX_NodeOwnerID + 1];
 
-				if (fileOwner == (unsigned int)fileOwner) {
+				if (fileOwner == (unsigned int)user) {
 					b[row*rowSize + INDEX_NodeAccesRight] = c;//Set files Access Rights to Defult Access Rights
 					mMemblockDevice.writeBlock(fi.parrentBlockIndex, b);
 

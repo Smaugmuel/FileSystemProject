@@ -42,8 +42,8 @@ int main(void)
 {
 	std::string userCommand, commandArr[MAXCOMMANDS];
 	std::map<std::string, int> users;
-	std::string currentUser = "";    // Change this if you want another user to be displayed
-	int UserID = 0;
+	std::string currentUser = "User1";    // Change this if you want another user to be displayed
+	int UserID = 1;
 
 	std::string currentDir = "/";    // current directory, used for output
 	int currentDirectoryBlock;
@@ -58,7 +58,6 @@ int main(void)
 	users["User2"] = 2;
 	users["User3"] = 3;
 	users["User4"] = 4;
-
 
     do {
         std::cout << currentUser << ":" << currentDir << "$ ";
@@ -479,10 +478,10 @@ void Chmod(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], 
 
 			char c = 12;
 			if (commandArr[1][0] == 'R' || commandArr[1][0] == 'r') {
-				c += 2;
-			}
-			if (commandArr[1][0] == 'W' || commandArr[1][0] == 'w') {
 				c += 1;
+			}
+			if (commandArr[1][1] == 'W' || commandArr[1][1] == 'w') {
+				c += 2;
 			}
 			
 			fs.Cmod(UserID, ProcessPath(currentDir, commandArr[2]), c, UserID);
@@ -535,7 +534,7 @@ std::string TrimPath(std::string path) {
 		if (folders.at(i) == ".." && !folders2.empty()) {
 			folders2.pop_back();
 		}
-		else if (folders.at(i) != "." && !folders2.empty()) {
+		else if (folders.at(i) != ".") {
 			folders2.push_back(folders.at(i));
 		}
 	}
@@ -545,7 +544,8 @@ std::string TrimPath(std::string path) {
 
 	for (int i = 0; i < folders2.size(); i++)
 	{
-		output += folders2.at(i) + "/";
+		if(folders2.at(i) != "..")
+			output += folders2.at(i) + "/";
 	}
 
 	output.pop_back();
