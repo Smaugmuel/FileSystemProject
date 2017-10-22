@@ -45,8 +45,14 @@ void MemBlockDevice::changeBlockStatus(int blockNr, bool used)
 	memBlocks[0].write(statusByte,blockNr/8);
 }
 
+void MemBlockDevice::init()
+{
+	changeBlockStatus(0, true);//Set Block containing Block Bit Map as being used
+	this->nrOfFreeBlocks = nrOfBlocks;
+}
+
 MemBlockDevice::MemBlockDevice(int nrOfBlocks): BlockDevice(nrOfBlocks) {
-	changeBlockStatus(0,true);//Set Block containing Block Bit Map as being used
+	init();
 }
 
 MemBlockDevice::MemBlockDevice(const MemBlockDevice &other) : BlockDevice(other) {
@@ -163,8 +169,10 @@ Block MemBlockDevice::readBlock(int blockNr) const {
 /* Resets all the blocks */
 void MemBlockDevice::reset() {
     for (int i = 0; i < this->nrOfBlocks; ++i) {
-        this->memBlocks[i].reset('0');				//TODO 0 != '0'
+        this->memBlocks[i].reset();
     }
+
+	init();
 }
 
 int MemBlockDevice::size() const {
