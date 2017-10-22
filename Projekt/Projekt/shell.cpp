@@ -89,7 +89,7 @@ int main(void)
                 break;
             case 5: // createImage
 				if (nrOfCommands > 1) {
-					CreateImage(&fs, commandArr[1]);
+					CreateImage(fs, commandArr[1]);
 					std::cout << "Restored filesystem to: " << commandArr[1] << std::endl;
 				}
 				else {
@@ -98,7 +98,7 @@ int main(void)
                 break;
             case 6: // restoreImage
 				if (nrOfCommands > 1) {
-					ReadImage(&fs, commandArr[1]);
+					ReadImage(fs, commandArr[1]);
 				}
 				else {
 					std::cout << "Wrong Syntax! Give the restored file a name!" << std::endl;
@@ -209,7 +209,7 @@ void CreateImage(FileSystem& fs, std::string name) {
 
 }
 
-void ReadImage(FileSystem* fs, std::string name) {
+void ReadImage(FileSystem& fs, std::string name) {
 	std::ifstream File(name);
 	char blockData[512];
 	int j = 0;
