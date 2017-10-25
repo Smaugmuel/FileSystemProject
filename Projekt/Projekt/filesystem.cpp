@@ -547,34 +547,40 @@ int FileSystem::AppendFile(int userID, std::string data, std::string path, int s
 {
 	FileInfo fi = Exist(path, startBlock);
 
-	std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
+	if (fi.exist) {
 
-	int blockSize = b.size(); //MaxBytes
-	const int maxRows = blockSize / rowSize;
-	int row = 0;
-	bool found = false;
-	char a;
-	while ((a = b[row*rowSize]) != 0 && row < maxRows && !found)
-	{
-		std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
-		nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
+		if (fi.flag == FLAG_DIRECTORY)
+			return -4;
 
-		//nameAtRow.size();
+		std::string b = mMemblockDevice.readBlock(fi.parrentBlockIndex).toString();
 
-		if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
+		int blockSize = b.size(); //MaxBytes
+		const int maxRows = blockSize / rowSize;
+		int row = 0;
+		bool found = false;
+		char a;
+		while ((a = b[row*rowSize]) != 0 && row < maxRows && !found)
+		{
+			std::string nameAtRow = b.substr(row*rowSize + INDEX_NodeFileName, SIZE_NodeFileName);//file/Foldername found in block
+			nameAtRow = nameAtRow.substr(0, nameAtRow.find('\0'));
 
-			unsigned int fileSize = (unsigned char)(b[row*rowSize + INDEX_NodeFileSize]) >> 24 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 1]) >> 16 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 2]) >> 8 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 3]) & 0xFF;
+			//nameAtRow.size();
 
-			//Write to file with fileSize as offset
-			return WriteFile(userID, data, path, fileSize, fi.parrentBlockIndex);
+			if (nameAtRow.compare(fi.fileName) == 0) {//File Exist!
 
-			found = true;
+				unsigned int fileSize = (unsigned char)(b[row*rowSize + INDEX_NodeFileSize]) >> 24 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 1]) >> 16 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 2]) >> 8 & 0xFF | (unsigned char)(b[row*rowSize + INDEX_NodeFileSize + 3]) & 0xFF;
+
+				//Write to file with fileSize as offset
+				return WriteFile(userID, data, fi.fileName, fileSize, fi.parrentBlockIndex);
+
+				found = true;
+			}
+
+			row++;
 		}
-
-		row++;
 	}
 
-	return 0;
+	return -2;
 }
 
 std::string FileSystem::readFile(int userID, std::string path, int startBlock)
