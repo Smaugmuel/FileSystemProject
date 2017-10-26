@@ -12,7 +12,8 @@ class BlockDevice
 protected:
     Block* memBlocks;
     int nrOfBlocks;
-    int nrOfFreeBlocks;
+    int nrOfFreeBlocks;//added
+	int blockSize;//added
 public:
     BlockDevice(int nrOfBlocks);
     BlockDevice(const BlockDevice &other);
@@ -27,6 +28,7 @@ public:
     virtual Block readBlock(int blockNr) const = 0;
     virtual void reset() = 0;
     virtual int size() const = 0;
+	virtual int getBlockSize();
 };
 
 #endif // BLOCKDEVICE_H

@@ -3,7 +3,11 @@
 
 void MemBlockDevice::changeBlockStatus(int blockNr, bool used)
 {
-	//TODO: Error Handling (Out of bounds)
+	if (blockNr < 0 || blockNr >= nrOfBlocks) //Out Of Bounds
+		return;
+
+	int BlockToCheck = blockNr / nrOfStatusBitsInBlock;//Calculate Which block have the status bit inside it.
+	int StatusBitIndexRelative = (blockNr%nrOfStatusBitsInBlock);//which bit inside BlockToCheck have status we are looking for.
 
 	//Each bit in each byte(on block 0) represents a block on the disk
 	//Each Byte have status bit for 8 blocks
@@ -24,31 +28,44 @@ void MemBlockDevice::changeBlockStatus(int blockNr, bool used)
 	*/
 
 	//Finds the right Byte containing status bit for desired bit.
-	char statusByte = memBlocks[0][blockNr/8];
+	char statusByte = memBlocks[BlockToCheck][StatusBitIndexRelative/8];//Get the char, which we will read the status bit from.
 
-	char currentStatus = (statusByte >> (blockNr % 8)) & 1;//Gets the current status of desired block.
+	char currentStatus = (statusByte >> (StatusBitIndexRelative % 8)) & 1;//Gets the current status of desired block.
 
 	if (used) {//If true, set status bit for the desired block to a 1(in use)
 		if (currentStatus == 0) {//Checks if bit not allredy is equal to 1
-			statusByte |= used << (blockNr % 8);
+			statusByte |= used << (StatusBitIndexRelative % 8);
 			nrOfFreeBlocks--;//decrese nr of free blocks
 		}
 	}
 	else {//If false, set status bit for the desired block to a 0(not in use)
 		if (currentStatus == 1) {//Checks if bit not allredy is equal to 0
-			statusByte &= ~(1 << (blockNr % 8));
+			statusByte &= ~(1 << (StatusBitIndexRelative % 8));
 			nrOfFreeBlocks++;//increse nr of free blocks
 		}
 	}	
 
 	//rewrite byte containing statis bit to block
-	memBlocks[0].write(statusByte,blockNr/8);
+	memBlocks[BlockToCheck].write(statusByte, StatusBitIndexRelative /8);
 }
 
 void MemBlockDevice::init()
 {
-	changeBlockStatus(0, true);//Set Block containing Block Bit Map as being used
-	this->nrOfFreeBlocks = nrOfBlocks;
+
+	nrOfStatusBitsInBlock = blockSize * 8;//nr of bits in one block that can be used by bitmap.
+	nrOfBlocksInBitMap = (nrOfBlocks/ nrOfStatusBitsInBlock);//Calculate how many blocks needed for bitmap.
+
+	if (nrOfBlocks%nrOfStatusBitsInBlock != 0)
+		nrOfBlocksInBitMap++; //Add one block to bitmap if it isnot an exactly fit.
+
+	this->nrOfFreeBlocks = nrOfBlocks;//Remove bitmap blocks from nrOfFreeBlocks
+
+	for (int i = 0; i < nrOfBlocksInBitMap; i++)
+	{
+		changeBlockStatus(i, true);//Set all Blocks containing Block Bit Map as being used
+	}
+	
+	
 }
 
 MemBlockDevice::MemBlockDevice(int nrOfBlocks): BlockDevice(nrOfBlocks) {

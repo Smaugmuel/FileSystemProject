@@ -394,16 +394,19 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 			std::cout << "Wrote to file\n\n";
 			break;
 		case -1:
-			std::cout << "Couldn't write to file: Out of range\n\n";
+			std::cout << "Couldn't write to file: Disk full\n\n";
 			break;
 		case -2:
-			std::cout << "Couldn't write to file: Wrong size\n\n";
+			std::cout << "Couldn't write to file: File not Found\n\n";
 			break;
 		case -3:
 			std::cout << "Couldn't write to file: Content couldn't fit\n\n";
 			break;
 		case -4:
-			std::cout << "Couldn't write to file: File does not exist\n\n";
+			std::cout << "Couldn't write to file: Can't Append Directory\n\n";
+			break;
+		case -5:
+			std::cout << "Couldn't write to file: Access Denied\n\n";
 			break;
 		default:
 			break;
