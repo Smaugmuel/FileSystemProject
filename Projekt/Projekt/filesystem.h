@@ -17,7 +17,7 @@ struct FileInfo {
 class FileSystem
 {
 private:
-    MemBlockDevice mMemblockDevice;
+    MemBlockDevice mMemblockDevice = MemBlockDevice(8000);
 
 	unsigned int mRootStart;
 	//unsigned int mBlockCount;

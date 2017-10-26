@@ -678,7 +678,7 @@ int FileSystem::CopyFile(int userID, std::string oldFilePath, std::string newFil
 		return WriteFile(userID, blockContent, newFilePath);
 	}
 
-	// Old file didn't exist or wasn't a flag
+	// Old file didn't exist or wasn't a File
 	return -3;
 }
 

@@ -192,7 +192,7 @@ std::string help() {
     helpStr += "* mkdir  <directory>:               Creates a new directory called <directory>\n";
     helpStr += "* cd     <directory>:               Changes current working directory to <directory>\n";
     helpStr += "* pwd:                              Get current working directory\n";
-	helpStr += "* spaceleft:                        Shows how much space is left in file system\n";
+	helpStr += "* spaceleft [<-Extras>]:            Shows how much space is left in file system. (Extra: <-nt> print no extra text. <-Kb> print size in Kb. <-Mb> print size in Mb.  <-Gb> print size in Gb. )\n";
 	helpStr += "* cu     <username>:                Changes user to <username>\n";
 	helpStr += "* chmod  <access right> <filename>: Changes access rights of each user except owner of <filename> to <access right> (r- : Read only, rw : Read and write, -w : Write only, -- : No access\n";
     helpStr += "* help:                             Prints this help screen\n";
@@ -241,18 +241,16 @@ void CreateFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 				std::cout << "Wrote to file\n\n";
 				break;
 			case -1:
-				std::cout << "Couldn't write to file: Out of range\n\n";
+				std::cout << "Couldn't write to file: Disk full\n\n";
 				break;
 			case -2:
-				std::cout << "Couldn't write to file: Wrong size\n\n";
+				std::cout << "Couldn't write to file: File not Found\n\n";
 				break;
-			case -3:
-				std::cout << "Couldn't write to file: Content couldn't fit\n\n";
-				break;
-			case -4:
-				std::cout << "Couldn't write to file: File does not exist\n\n";
+			case -5:
+				std::cout << "Couldn't write to file: Access Denied\n\n";
 				break;
 			default:
+				std::cout << "Couldn't write to file: Unknown Error\n\n";
 				break;
 			}
 		}
@@ -278,7 +276,7 @@ void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	std::cout << "Listing directory\n";
-	std::cout << fs.listDir(currentDir + (nrOfCommands > 1 ? ProcessPath(currentDir, commandArr[1]) : ".")) << "\n";
+	std::cout << fs.listDir((nrOfCommands > 1 ? ProcessPath(currentDir, commandArr[1]) : ".")) << "\n";
 }
 
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
@@ -288,18 +286,22 @@ void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 		switch (fs.CopyFile(UserID, ProcessPath(currentDir, commandArr[1]), ProcessPath(currentDir, commandArr[2])))
 		{
 		case 1:
-			std::cout << "Created file " << commandArr[2] << " as a copy of " << commandArr[1] << "\n\n";
+			std::cout << "Copyed file\n\n";
 			break;
 		case -1:
-			std::cout << "Could not create file " << commandArr[2] << "\n\n";
+			std::cout << "Couldn't copy file: Disk full\n\n";
 			break;
 		case -2:
-			std::cout << "File " << commandArr[1] << " does not exist\n\n";
+			std::cout << "Couldn't copy file: New file got corrupted\n\n";
 			break;
 		case -3:
-			std::cout << commandArr[1] << " does not exist or isn't a file\n\n";
+			std::cout << "Couldn't copy file: File not Found or is Directory\n\n";
+			break;
+		case -5:
+			std::cout << "Couldn't copy file: Access Denied\n\n";
 			break;
 		default:
+			std::cout << "Couldn't copy file: Unknown Error\n\n";
 			break;
 		}
 	}
@@ -349,10 +351,13 @@ void MoveFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 			std::cout << "Varying block dimensions\n\n";
 			break;
 		case -3:
-			std::cout << "Could not find the chosen directory\n\n";
+			std::cout << "Couldn't move file: Targeted directory does'not exist. Please create it first\n\n";
 			break;
 		case -4:
-			std::cout << "File " << commandArr[1] << " was not found\n\n";
+			std::cout << "Couldn't move file: File " << commandArr[1] << " was not found\n\n";
+			break;
+		case -5:
+			std::cout << "Couldn't move file: Access Denied\n\n";
 			break;
 		default:
 			break;
@@ -409,6 +414,7 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 			std::cout << "Couldn't write to file: Access Denied\n\n";
 			break;
 		default:
+			std::cout << "Couldn't write to file: Unkown Error\n\n";
 			break;
 		}
 
@@ -423,18 +429,22 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 				std::cout << "Wrote to file\n\n";
 				break;
 			case -1:
-				std::cout << "Couldn't write to file: Out of range\n\n";
+				std::cout << "Couldn't write to file: Disk full\n\n";
 				break;
 			case -2:
-				std::cout << "Couldn't write to file: Wrong size\n\n";
+				std::cout << "Couldn't write to file: File not Found\n\n";
 				break;
 			case -3:
 				std::cout << "Couldn't write to file: Content couldn't fit\n\n";
 				break;
 			case -4:
-				std::cout << "Couldn't write to file: File does not exist\n\n";
+				std::cout << "Couldn't write to file: Can't Append Directory\n\n";
+				break;
+			case -5:
+				std::cout << "Couldn't write to file: Access Denied\n\n";
 				break;
 			default:
+				std::cout << "Couldn't write to file: Unkown Error\n\n";
 				break;
 			}
 		}
@@ -446,12 +456,12 @@ void AppendFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 }
 
 void ChangeDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
-	
-	FileInfo fi = fs.Exist(ProcessPath(currentDir, commandArr[1]));
+	std::string newPath = ProcessPath(currentDir, commandArr[1]);
+	FileInfo fi = fs.Exist(newPath);
 
 	if (fi.exist && fi.flag == FLAG_DIRECTORY) {
-		currentDir += commandArr[1];
-		currentDir = TrimPath(currentDir) + "/";
+		currentDir = newPath;
+		currentDir = TrimPath(newPath) + "/";
 	}
 	else
 	{
@@ -492,7 +502,47 @@ void FormatDisk(unsigned int nrOfCommands, FileSystem& fs, std::string commandAr
 }
 
 void SpaceLeft(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir) {
-	std::cout << "Space Left On Disk: "<< fs.freeSpace() << " Bytes (" << fs.freeSpace() / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
+	
+	long Originalsize = fs.freeSpace();
+
+	if (nrOfCommands == 1) {
+		std::cout << "Space Left On Disk: " << Originalsize << " Bytes (" << Originalsize / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
+	}
+	else {
+		bool noText = false;
+		int lvl = 0;
+		long newSize;
+		std::string unit = "Bytes";
+
+		for (int i = 1; i < nrOfCommands; i++)
+		{
+			if (commandArr[i] == "-nt") {
+				noText = true;
+			}
+			else if (commandArr[i] == "-Kb") {
+				lvl = 10;
+				unit = "Kb";
+			}
+			else if (commandArr[i] == "-Mb") {
+				lvl = 20;
+				unit = "Mb";
+			}
+			else if (commandArr[i] == "-Gb") {
+				lvl = 30;
+				unit = "Gb";
+			}
+		}
+		
+		newSize = Originalsize >> lvl;//Divide size to
+		if (noText) {
+			std::cout << newSize << std::endl;
+		}
+		else {
+			std::cout << "Space Left On Disk: " << newSize << " " << unit << " (" << Originalsize / BLOCK_SIZE_DEFAULT << " Blocks)" << std::endl << std::endl;
+		}
+
+		
+	}
 }
 
 void ChangeUser(unsigned int nrOfCommands, std::string commandArr[], std::map<std::string, int>& users, std::string& currentUser, int& currentUserID)
