@@ -276,7 +276,7 @@ void Catenate(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[
 void ListDirectory(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir)
 {
 	std::cout << "Listing directory\n";
-	std::cout << fs.listDir((nrOfCommands > 1 ? ProcessPath(currentDir, commandArr[1]) : ".")) << "\n";
+	std::cout << fs.listDir((nrOfCommands > 1 ? ProcessPath(currentDir, commandArr[1]) : currentDir + ".")) << "\n";
 }
 
 void CopyFile(unsigned int nrOfCommands, FileSystem& fs, std::string commandArr[], std::string& currentDir, int UserID)
